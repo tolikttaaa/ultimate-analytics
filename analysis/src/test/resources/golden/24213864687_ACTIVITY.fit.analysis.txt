@@ -5,3 +5,6 @@ samples: 6782, interpolated: 4266
 speed outliers: 0
 gaps: 0 s in 0: 
 grid sha256: 6c861ca5232f823f24288ad37b530128f285ac4a287f8b194a29b24371c4ea4e
+smoothed speed: max 5.892 m/s
+GPS acceleration: min -1.334, max 1.632 m/s²
+samples sha256: 05de41fb0162f802ac3a26ad610ef1dba5b2c8a896e376314f76137019856dbe

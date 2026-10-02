@@ -158,3 +158,18 @@ Newest entries at the bottom.
   - The analysis golden tests use `fit-parser` and its test fixtures in test scope only; the analysis main code has no
     FIT SDK dependency.
 - **Alternatives:** count gaps as the time between samples; spec order (interpolate, then remove outliers).
+
+## 2026-10-02 — Smoothing details (step 6)
+
+- **Context:** spec 6.1 steps 5-6 ask for a centred Savitzky–Golay filter but do not say what happens where a full
+  centred window does not fit: at the ends of a run between gaps, and in runs shorter than the window.
+- **Decision:**
+  - Every run between gaps is filtered on its own.
+  - Near the ends of a run, the polynomial fitted to the first or last full window is evaluated off-centre (the
+    "interp" mode of SciPy's `savgol_filter`), so the window size and order stay the same up to the edges.
+  - A run shorter than `sgWindow` is fitted as a whole with the order lowered to `run length − 1` if needed; a single
+    isolated sample keeps its speed and gets acceleration 0.
+  - Coefficients are computed by least squares for any window, order and position, and tested against the classic
+    published tables (spec 12).
+  - The smoothing step returns domain `Sample`s; `inPause` is set by the pause detection (step 7).
+- **Alternatives:** shrink the window near the edges; mirror padding; leave edge samples unsmoothed.

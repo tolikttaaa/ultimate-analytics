@@ -2,13 +2,16 @@ package com.ttaaa.ultimate.analysis
 
 import com.ttaaa.ultimate.analysis.grid.Grid
 import com.ttaaa.ultimate.analysis.grid.buildGrid
+import com.ttaaa.ultimate.analysis.smoothing.smooth
 import com.ttaaa.ultimate.domain.AnalysisParameters
 import com.ttaaa.ultimate.domain.RawSession
+import com.ttaaa.ultimate.domain.Sample
 import com.ttaaa.ultimate.fit.FitParser
 import com.ttaaa.ultimate.fit.Golden
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Files
+import java.util.Locale
 
 /**
  * Golden files through the analysis pipeline (spec 12). Any change in the output fails until the snapshot is updated
@@ -23,11 +26,12 @@ class AnalysisGoldenTest {
     fun `analyses the golden file as approved`(fileName: String) {
         val raw = Files.newInputStream(Golden.fitFile(fileName)).use(FitParser::parse)
         val grid = buildGrid(raw, params)
+        val samples = smooth(grid, params)
 
-        Golden.verify("$fileName.analysis.txt", summary(raw, grid))
+        Golden.verify("$fileName.analysis.txt", summary(raw, grid, samples))
     }
 
-    private fun summary(raw: RawSession, grid: Grid): String = buildString {
+    private fun summary(raw: RawSession, grid: Grid, samples: List<Sample>): String = buildString {
         val points = grid.points
         val present = points.mapTo(HashSet()) { it.t }
         val gaps = (0..grid.lastT).filterNot { it in present }.fold(mutableListOf<IntRange>()) { ranges, t ->
@@ -41,7 +45,12 @@ class AnalysisGoldenTest {
         appendLine("speed outliers: ${raw.records.count { (it.speed ?: 0.0) > params.maxPlausibleSpeed }}")
         appendLine("gaps: ${gaps.sumOf { it.count() }} s in ${gaps.size}: ${gaps.joinToString { "[${it.first}, ${it.last}]" }}")
         appendLine("grid sha256: ${Golden.sha256(points.joinToString("\n"))}")
+        appendLine("smoothed speed: max ${samples.maxOf { it.speed }.format()} m/s")
+        appendLine("GPS acceleration: min ${samples.minOf { it.accel }.format()}, max ${samples.maxOf { it.accel }.format()} m/s²")
+        appendLine("samples sha256: ${Golden.sha256(samples.joinToString("\n"))}")
     }
+
+    private fun Double.format() = String.format(Locale.ROOT, "%.3f", this)
 
     companion object {
         @JvmStatic
