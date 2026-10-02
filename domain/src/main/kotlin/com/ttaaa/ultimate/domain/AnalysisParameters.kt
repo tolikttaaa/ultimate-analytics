@@ -7,8 +7,18 @@ package com.ttaaa.ultimate.domain
  * Changing any default changes analysis results: bump `ANALYSIS_VERSION` in the `analysis` module together with it.
  */
 data class AnalysisParameters(
-    /** Longest gap filled by linear interpolation, s. Longer gaps stay gaps (spec 6.1). */
+    /**
+     * Longest gap filled by linear interpolation, in missing seconds between two samples. Longer gaps stay gaps
+     * (spec 6.1). Applies to sessions recorded every second.
+     */
     val maxInterpolationGapSec: Int = 3,
+    /**
+     * A session counts as recorded every second when at least this share of its record intervals is 1 s;
+     * otherwise it is Smart recording (docs/DECISIONS.md).
+     */
+    val everySecondRecordingMinShare: Double = 0.9,
+    /** [maxInterpolationGapSec] for Smart-recorded sessions, whose records are normally up to ~6 s apart. */
+    val smartRecordingMaxGapSec: Int = 7,
     /** Speeds above this are outliers, set to missing and re-interpolated, m/s (spec 6.1). */
     val maxPlausibleSpeed: Double = 11.0,
     /** Savitzky–Golay window, samples; odd (spec 6.1). */
@@ -46,6 +56,10 @@ data class AnalysisParameters(
 ) {
     init {
         require(maxInterpolationGapSec >= 0) { "maxInterpolationGapSec must not be negative" }
+        require(everySecondRecordingMinShare > 0.0 && everySecondRecordingMinShare <= 1.0) {
+            "everySecondRecordingMinShare must be in (0, 1]"
+        }
+        require(smartRecordingMaxGapSec >= 0) { "smartRecordingMaxGapSec must not be negative" }
         require(maxPlausibleSpeed > 0.0) { "maxPlausibleSpeed must be positive" }
         require(sgWindow >= 3 && sgWindow % 2 == 1) { "sgWindow must be odd and at least 3" }
         require(sgOrder in 1..<sgWindow) { "sgOrder must be at least 1 and below sgWindow" }

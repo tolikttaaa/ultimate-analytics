@@ -18,6 +18,9 @@ class AnalysisParametersTest {
     fun `rejects inconsistent values`() {
         val invalid = mapOf(
             "negative interpolation gap" to { defaults.copy(maxInterpolationGapSec = -1) },
+            "zero every-second share" to { defaults.copy(everySecondRecordingMinShare = 0.0) },
+            "every-second share above 1" to { defaults.copy(everySecondRecordingMinShare = 1.1) },
+            "negative Smart recording gap" to { defaults.copy(smartRecordingMaxGapSec = -1) },
             "zero plausible speed" to { defaults.copy(maxPlausibleSpeed = 0.0) },
             "even SG window" to { defaults.copy(sgWindow = 4) },
             "SG window below 3" to { defaults.copy(sgWindow = 1, sgOrder = 0) },

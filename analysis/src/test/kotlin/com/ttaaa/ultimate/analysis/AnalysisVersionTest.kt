@@ -13,6 +13,8 @@ class AnalysisVersionTest {
     private val defaultsByVersion = mapOf(
         1 to AnalysisParameters(
             maxInterpolationGapSec = 3,
+            everySecondRecordingMinShare = 0.9,
+            smartRecordingMaxGapSec = 7,
             maxPlausibleSpeed = 11.0,
             sgWindow = 5,
             sgOrder = 2,

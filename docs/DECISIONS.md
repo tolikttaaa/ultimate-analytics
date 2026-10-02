@@ -125,3 +125,36 @@ Newest entries at the bottom.
     `src/test/resources/fit/expected/`; `-PupdateGolden` rewrites them. All 13 files are committed as golden files.
 - **Alternatives:** raw types in `fit-parser` with a copy in `analysis`; SLF4J as a dependency of `fit-parser`;
   full JSON snapshots of every record.
+
+## 2026-10-02 — Smart recording support (option C)
+
+- **Context:** the user's existing files were recorded with Garmin Smart recording (records 1-6 s apart), while spec 4.2
+  requires Every Second and spec 6.1 interpolates only gaps of up to 3 s. Followed literally, most of each existing
+  session would be a gap.
+- **Decision (chosen by the user):** detect the recording mode per session. A session is `EVERY_SECOND` when at least
+  `everySecondRecordingMinShare` (0.9) of its record intervals are 1 s (intervals across a timer stop do not count),
+  otherwise `SMART`. Every-second sessions follow the spec unchanged (`maxInterpolationGapSec` = 3); Smart sessions
+  interpolate up to `smartRecordingMaxGapSec` (7) missing seconds. Timer stops are never interpolated in either mode.
+  The mode is stored with the session (a `V2` migration with the persistence in step 11) so the UI can mark sprint and
+  acceleration metrics of Smart sessions as low-confidence. New trainings should be recorded Every Second.
+- **Alternatives:** follow the spec literally (A); raise the interpolation limit for every file (B).
+
+## 2026-10-02 — Grid details (step 5)
+
+- **Context:** spec 6.1 steps 2-4 leave some details open.
+- **Decision:**
+  - A gap's length is the number of missing seconds between two samples: with the limit 3, samples up to 4 s apart are
+    joined.
+  - Outliers (speed above `maxPlausibleSpeed`) are removed before interpolating rather than after, so no interpolated
+    value is derived from an outlier; a run of missing and outlier seconds longer than the limit stays a gap.
+  - A second needs a speed to become a sample. Seconds without a plausible speed that cannot be interpolated (for
+    example the first records before the GPS fix) are gaps, while `t = 0` stays at the first record.
+  - Interpolated seconds keep whatever was recorded for them (heart rate, position, the raw outlier speed in
+    `speedRaw`) and interpolate the rest; recorded seconds are never changed.
+  - The timer counts as stopped from a STOP event to the next START; nothing is interpolated across that interval,
+    however short.
+  - `ANALYSIS_VERSION` stays 1 until the first analysis results are stored (step 11): until then, new parameters extend
+    the version-1 defaults in place.
+  - The analysis golden tests use `fit-parser` and its test fixtures in test scope only; the analysis main code has no
+    FIT SDK dependency.
+- **Alternatives:** count gaps as the time between samples; spec order (interpolate, then remove outliers).

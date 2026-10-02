@@ -1,0 +1,7 @@
+analysisVersion: 1
+recordingMode: SMART
+lastT: 6566
+samples: 6566, interpolated: 3905
+speed outliers: 0
+gaps: 1 s in 1: [0, 0]
+grid sha256: fec1faa2f71617903a0abde47045e827da8416ebe240ba1e413fb26517a86d28

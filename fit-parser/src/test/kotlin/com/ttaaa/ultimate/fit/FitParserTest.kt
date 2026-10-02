@@ -168,7 +168,7 @@ class FitParserTest {
 
     @Test
     fun `rejects a corrupted file`() {
-        val bytes = Files.readAllBytes(Golden.fitFiles.first())
+        val bytes = Files.readAllBytes(Golden.fitFile(Golden.fitFileNames.first()))
         bytes[bytes.size / 2] = (bytes[bytes.size / 2] + 1).toByte()
 
         shouldThrow<FitParseException.Corrupted> { parse(bytes) }

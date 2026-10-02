@@ -4,18 +4,16 @@ import com.ttaaa.ultimate.domain.RawSession
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Files
-import java.security.MessageDigest
 import java.time.Duration
-import kotlin.io.path.name
 
 class FitParserGoldenTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("goldenFiles")
     fun `parses the golden file as approved`(fileName: String) {
-        val raw = Files.newInputStream(Golden.dir.resolve(fileName)).use(FitParser::parse)
+        val raw = Files.newInputStream(Golden.fitFile(fileName)).use(FitParser::parse)
 
-        Golden.verify(Golden.dir.resolve("expected/$fileName.parser.txt"), summary(raw))
+        Golden.verify("$fileName.parser.txt", summary(raw))
     }
 
     /** Readable summary of the parsed session, plus a digest of every record so that any change is detected. */
@@ -44,14 +42,11 @@ class FitParserGoldenTest {
         raw.laps.forEach { appendLine("  ${it.startTime} .. ${it.endTime} ${it.trigger}") }
         appendLine("timer events:")
         raw.timerEvents.forEach { appendLine("  ${it.timestamp} ${it.type}") }
-        appendLine("records sha256: ${sha256(records.joinToString("\n"))}")
+        appendLine("records sha256: ${Golden.sha256(records.joinToString("\n"))}")
     }
-
-    private fun sha256(text: String): String =
-        MessageDigest.getInstance("SHA-256").digest(text.toByteArray()).toHexString()
 
     companion object {
         @JvmStatic
-        fun goldenFiles(): List<String> = Golden.fitFiles.map { it.name }
+        fun goldenFiles(): List<String> = Golden.fitFileNames
     }
 }
