@@ -4,6 +4,8 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.core.userdetails.UserDetailsService
+import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
 
 /**
@@ -21,4 +23,9 @@ class SecurityConfiguration {
         // No sessions or cookies are used for authentication in the local profile, so there is nothing to forge.
         .csrf { it.disable() }
         .build()
+
+    /** No users in the local profile; also stops Spring Boot from creating a default user with a logged password. */
+    @Bean
+    @Profile("local")
+    fun localUserDetailsService(): UserDetailsService = InMemoryUserDetailsManager()
 }
