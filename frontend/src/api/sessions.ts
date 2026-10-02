@@ -30,11 +30,12 @@ export function useSessions(filter: SessionFilter = {}) {
   })
 }
 
-/** GET /api/sessions/{id} */
+/** GET /api/sessions/{id}; waits while there is no id. */
 export function useSession(id: string) {
   return useQuery({
     queryKey: sessionKeys.detail(id),
     queryFn: () => unwrap(api.GET('/api/sessions/{id}', { params: { path: { id } } })),
+    enabled: id !== '',
   })
 }
 

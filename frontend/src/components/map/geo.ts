@@ -8,6 +8,9 @@ import type { Effort, GeozoneShape, SessionSeries } from '../../api/types'
 
 type Track = Pick<SessionSeries, 't' | 'lat' | 'lon'>
 
+/** The `type` of a geozone shape in the API: a circle, or a GeoJSON polygon (capitalised as in GeoJSON). */
+export const SHAPE = { circle: 'circle', polygon: 'Polygon' } as const
+
 const EARTH_RADIUS_M = 6_371_008.8
 const CIRCLE_VERTICES = 64
 /**
@@ -91,7 +94,7 @@ export function trackBounds(series: Track, from = -Infinity, to = Infinity): [Po
 /** The outline of a geozone; a circle becomes a polygon of 64 vertices. */
 export function geozoneOutline(shape: GeozoneShape): Feature<Polygon> | null {
   let rings: Position[][] | null = null
-  if (shape.type === 'circle' && shape.lat != null && shape.lon != null && shape.radiusM != null) {
+  if (shape.type === SHAPE.circle && shape.lat != null && shape.lon != null && shape.radiusM != null) {
     const angle = shape.radiusM / EARTH_RADIUS_M * (180 / Math.PI)
     const ring = Array.from({ length: CIRCLE_VERTICES + 1 }, (_, i) => {
       const bearing = (2 * Math.PI * i) / CIRCLE_VERTICES
@@ -101,7 +104,7 @@ export function geozoneOutline(shape: GeozoneShape): Feature<Polygon> | null {
       ]
     })
     rings = [ring]
-  } else if (shape.type === 'polygon' && shape.coordinates) {
+  } else if (shape.type === SHAPE.polygon && shape.coordinates) {
     rings = shape.coordinates
   }
   return rings ? { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: rings } } : null

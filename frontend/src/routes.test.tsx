@@ -11,6 +11,7 @@ import { routes } from './routes'
 // jsdom has no canvas and no WebGL.
 vi.mock('./components/charts/EChart', () => ({ EChart: () => null }))
 vi.mock('./components/map/SessionMap', () => ({ SessionMap: () => null }))
+vi.mock('./components/map/GeozoneMap', () => ({ GeozoneMap: () => null }))
 
 /** Answers the API calls of the screens with fixed data. */
 function stubApi() {
@@ -50,6 +51,12 @@ describe('routes', () => {
     stubApi()
     renderAt('/sessions/s1')
     expect(await screen.findByRole('heading', { name: '2026-09-30 19:07' })).toBeInTheDocument()
+  })
+
+  it('shows the geozones', async () => {
+    stubApi()
+    renderAt('/geozones')
+    expect(await screen.findByRole('heading', { name: 'Geozones' })).toBeInTheDocument()
   })
 
   it('shows not found for unknown paths', async () => {

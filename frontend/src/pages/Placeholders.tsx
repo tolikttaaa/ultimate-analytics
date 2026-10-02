@@ -2,10 +2,6 @@ import { useParams } from 'react-router'
 
 /* Screens of spec 10.1 that later steps fill in. */
 
-export function GeozonesPage() {
-  return <h1>Geozones</h1>
-}
-
 export function DrillTypesPage() {
   return <h1>Drill types</h1>
 }

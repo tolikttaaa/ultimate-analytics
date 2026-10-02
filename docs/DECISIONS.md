@@ -472,3 +472,23 @@ Newest entries at the bottom.
     with round joins needs more.
 - **Alternatives:** a toolbox button to switch between brushing and panning; a custom confirmation dialog; the effort
   in the URL.
+
+## 2026-10-02 — Geozones screen (step 19)
+
+- **Context:** spec 10.1 screen 4 asks for "circle (click + radius) or polygon (draw), edit, delete"; the interaction
+  details are open.
+- **Decision:**
+  - **Circle:** a click on the map sets the centre (each click moves it, also when editing); the radius is a number
+    field, 150 m by default.
+  - **Polygon:** a click per corner; a double-click on the last corner or *Finish* closes it (the double-click's
+    repeated corner is dropped); *Undo corner* removes the last one. Editing a polygon means *Redraw*; dragging
+    single corners is left out of the POC.
+  - Surfaces offered are Grass and Sand, as the API documents for new geozones.
+  - Every change reports how many sessions were classified again (`affectedSessionCount`). Deleting asks for a
+    browser confirmation; Escape cancels drawing.
+  - The map fits all geozones; without any it starts at the latest session's start, where the first field
+    probably is. A click on an area selects it, a click in the list also brings it into view.
+  - **Fix of step 17:** the API names polygons `Polygon` (as GeoJSON) but the session map looked for `polygon`, so
+    polygon geozones were not outlined there; both screens now share one constant for the shape types.
+- **Alternatives:** dragging corners and the centre; a radius set by dragging; MapLibre drawing plugins (another
+  dependency, no MapLibre 6 support yet checked).

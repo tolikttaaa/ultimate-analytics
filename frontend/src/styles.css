@@ -644,3 +644,93 @@ input {
   height: 220px;
   margin: 8px 0 12px;
 }
+
+.geozones-page {
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  gap: 24px;
+  height: calc(100vh - 110px);
+  min-height: 560px;
+}
+
+.geozones-side {
+  overflow-y: auto;
+}
+
+.geozone-new {
+  display: flex;
+  gap: 6px;
+}
+
+.geozones-intro {
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+
+.geozones-map {
+  height: 100%;
+}
+
+.geozone-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--color-accent);
+  border-radius: 8px;
+}
+
+.geozone-editor p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.geozone-editor label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.geozone-draw,
+.geozone-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.geozone-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.geozone-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.geozone-row:hover {
+  background: var(--color-surface);
+}
+
+.geozone-row.selected {
+  box-shadow: inset 3px 0 0 var(--color-accent);
+  background: var(--color-surface);
+}
+
+.geozone-name {
+  font-weight: 600;
+}
+
+.geozone-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}

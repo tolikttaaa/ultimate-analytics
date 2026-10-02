@@ -1,5 +1,5 @@
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { type FitBoundsOptions, type LngLatBoundsLike, Map, NavigationControl, setWorkerUrl } from 'maplibre-gl'
+import { type FitBoundsOptions, type LngLatBoundsLike, type LngLatLike, Map, NavigationControl, setWorkerUrl } from 'maplibre-gl'
 // MapLibre finds its worker next to its own module, which bundling moves; Vite builds the worker and gives its URL.
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -10,9 +10,11 @@ setWorkerUrl(workerUrl)
 
 interface Props {
   config: MapConfig
-  /** The area shown first. */
+  /** The area shown first; without it, `center` and `zoom`. */
   bounds?: LngLatBoundsLike
   fitBoundsOptions?: FitBoundsOptions
+  center?: LngLatLike
+  zoom?: number
   /** Adds the overlays: on load and again after every switch of the base map, which replaces the style. */
   onStyleLoad: (map: Map) => void
   /** The map once created, and null when it is gone; for updating overlay data. */
@@ -20,14 +22,15 @@ interface Props {
 }
 
 /** A MapLibre map with the configured base maps and a switch between them (spec 10.2). */
-export function MapView({ config, bounds, fitBoundsOptions = { padding: 32, maxZoom: 18 }, onStyleLoad, onMap }: Props) {
+export function MapView(props: Props) {
+  const { config, bounds, fitBoundsOptions = { padding: 32, maxZoom: 18 }, center, zoom, onStyleLoad, onMap } = props
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<Map | null>(null)
   const [base, setBase] = useState<BaseMap>('map')
-  const latest = useRef({ onStyleLoad, onMap, bounds, fitBoundsOptions, base })
+  const latest = useRef({ onStyleLoad, onMap, bounds, fitBoundsOptions, center, zoom, base })
 
   useLayoutEffect(() => {
-    latest.current = { onStyleLoad, onMap, bounds, fitBoundsOptions, base }
+    latest.current = { onStyleLoad, onMap, bounds, fitBoundsOptions, center, zoom, base }
   })
 
   useEffect(() => {
@@ -36,6 +39,8 @@ export function MapView({ config, bounds, fitBoundsOptions = { padding: 32, maxZ
       style: baseMapStyle(config, latest.current.base),
       bounds: latest.current.bounds,
       fitBoundsOptions: latest.current.fitBoundsOptions,
+      center: latest.current.center,
+      zoom: latest.current.zoom,
       attributionControl: { compact: true },
     })
     instance.addControl(new NavigationControl({ showCompass: false }), 'top-left')

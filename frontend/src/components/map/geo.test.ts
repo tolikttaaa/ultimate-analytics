@@ -70,6 +70,6 @@ describe('geozoneOutline', () => {
 
   it('keeps a polygon as it is', () => {
     const coordinates = [[[33.1, 34.7], [33.2, 34.7], [33.2, 34.8], [33.1, 34.7]]]
-    expect(geozoneOutline({ type: 'polygon', coordinates })!.geometry.coordinates).toEqual(coordinates)
+    expect(geozoneOutline({ type: 'Polygon', coordinates })!.geometry.coordinates).toEqual(coordinates)
   })
 })

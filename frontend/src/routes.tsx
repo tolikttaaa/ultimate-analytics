@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router'
 import { AppLayout } from './layout/AppLayout'
-import { DrillTypePage, DrillTypesPage, GeozonesPage, NotFoundPage } from './pages/Placeholders'
+import { GeozonesPage } from './pages/geozones/GeozonesPage'
+import { DrillTypePage, DrillTypesPage, NotFoundPage } from './pages/Placeholders'
 import { SessionsPage } from './pages/sessions/SessionsPage'
 
 /** The five screens of spec 10.1; the upload dialog opens over the sessions list. */
