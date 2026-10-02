@@ -321,4 +321,7 @@ Newest entries at the bottom.
     (none between them) and covers the gaps between them. After every change efforts are attributed again and the
     snapshots of segments whose bounds changed are dropped (computed again when read); the session snapshot does not
     depend on segments and stays. An unknown drill type in a segment request is a 400.
+  - Drill type codes are trimmed and stored in upper case; a duplicate code is a 409. Drill type stats aggregate the
+    cached segment metrics per session and in total (weights of step 9); `from`/`to`/`surface` filter the sessions as
+    in the sessions list; per-session rows are in time order for the trend chart.
 - **Alternatives:** JSON Merge Patch documents; recomputing segment snapshots immediately.
