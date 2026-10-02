@@ -302,3 +302,23 @@ Newest entries at the bottom.
   with GPS tracks and heart rate. Every step commit is pushed to `origin main`; `.claude/settings.json` allows exactly
   `git push origin main` / `git push -u origin main` and denies force pushes.
 - **Alternatives:** private repository; removing the golden files from the history.
+
+## 2026-10-02 — API details (step 12)
+
+- **Context:** spec 9 lists the endpoints and payloads; some behaviour is open.
+- **Decision:**
+  - PATCH bodies distinguish an absent field (unchanged) from `null` (cleared) for clearable fields (session notes,
+    segment drill type and label), using `Optional` fields; empty or blank text also clears.
+  - The sessions list filters the start time with `from` (inclusive) and `to` (exclusive) ISO-8601 instants; pages are
+    0-based, at most 100 items. List rows take active time, effort count, max speed and moving pace from the cached
+    session metrics.
+  - Snapshots missing from the cache are computed on read and stored with the session's analysis version, so metrics of
+    an outdated session stay marked as outdated.
+  - `/series` covers every second `0..lastT` with `null` in gaps; values are sent as 32-bit floats, their stored
+    precision. `/metrics` needs both `from` and `to` within `[0, elapsedSec]`.
+  - Segment edits lock the session row, so concurrent edits cannot create overlaps. Editing bounds, splitting and
+    merging make a segment MANUAL; changing only type or label keeps its source. Merging needs consecutive segments
+    (none between them) and covers the gaps between them. After every change efforts are attributed again and the
+    snapshots of segments whose bounds changed are dropped (computed again when read); the session snapshot does not
+    depend on segments and stays. An unknown drill type in a segment request is a 400.
+- **Alternatives:** JSON Merge Patch documents; recomputing segment snapshots immediately.

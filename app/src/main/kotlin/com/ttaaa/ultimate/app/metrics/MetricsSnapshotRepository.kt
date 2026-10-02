@@ -46,6 +46,13 @@ class MetricsSnapshotRepository(private val jdbc: JdbcClient, private val json: 
             .optional()
             .orElse(null)
 
+    fun delete(scope: MetricsScope, scopeId: UUID) {
+        jdbc.sql("delete from metrics_snapshot where scope = :scope and scope_id = :scopeId")
+            .param("scope", scope.name)
+            .param("scopeId", scopeId)
+            .update()
+    }
+
     fun countBySession(sessionId: UUID): Int =
         jdbc.sql("select count(*) from metrics_snapshot where session_id = :sessionId")
             .param("sessionId", sessionId)

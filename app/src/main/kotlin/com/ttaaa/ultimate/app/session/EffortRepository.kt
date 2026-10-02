@@ -35,6 +35,13 @@ class EffortRepository(private val jdbc: JdbcClient, private val json: JsonMappe
         }
     }
 
+    fun updateSegment(id: UUID, segmentId: UUID?) {
+        jdbc.sql("update effort set segment_id = :segmentId where id = :id")
+            .param("id", id)
+            .param("segmentId", segmentId, Types.OTHER)
+            .update()
+    }
+
     fun findBySession(sessionId: UUID): List<StoredEffort> =
         jdbc.sql("select * from effort where session_id = :sessionId order by start_t")
             .param("sessionId", sessionId)
