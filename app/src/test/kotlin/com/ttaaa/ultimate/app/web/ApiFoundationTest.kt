@@ -2,6 +2,7 @@ package com.ttaaa.ultimate.app.web
 
 import com.ttaaa.ultimate.app.IntegrationTest
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
@@ -42,6 +43,17 @@ class ApiFoundationTest : IntegrationTest() {
         }
 
         missing shouldBe emptyList()
+    }
+
+    @Test
+    fun `serves Swagger UI`() {
+        val ui = get("/swagger-ui/index.html")
+
+        ui.statusCode shouldBe HttpStatus.OK
+        ui.body!! shouldContain "swagger-ui"
+        val shortcut = get("/swagger-ui.html")
+        shortcut.statusCode.is3xxRedirection shouldBe true
+        shortcut.headers.location.toString() shouldContain "/swagger-ui/index.html"
     }
 
     @Test
