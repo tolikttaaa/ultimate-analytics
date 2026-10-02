@@ -19,3 +19,5 @@ speed zones (s): STAND 4233, WALK 1674, JOG 773, RUN 74, HIGH_SPEED 5, SPRINT 2
 decelerations: 3, fatigue: -38.101 %
 heart rate: avg 146.688, max 183 bpm, zones % [0.499, 22.285, 34.457, 35.019, 6.804]
 session metrics sha256: fc4215fbd4b28574251f0357fdffb1df4235ca92fb220af2e6dac7622650fbb2
+laps: [0, 6761] session_end
+reference position: 34.59047, 32.93806

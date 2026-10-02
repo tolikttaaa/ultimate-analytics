@@ -245,3 +245,25 @@ Newest entries at the bottom.
     such totals. For adjacent windows of one session the totals equal the metrics of the whole window (property test).
 - **Alternatives:** the watch's cumulative distance; the plain sum of speed; counting time below 50 % HR in zone 1;
   clipping deceleration runs to the window.
+
+## 2026-10-02 — Pipeline entry point and geo details (step 10)
+
+- **Context:** spec 6.1 describes `analyze(rawSession, params) -> AnalysisResult` including geozone matching and
+  lap-based segments; spec 6.6 leaves the geometry details open.
+- **Decision:**
+  - `analyze` runs grid, smoothing, pauses and efforts, puts the laps on the time axis (rounded to the nearest second,
+    clamped to `[0, lastT]`) and computes the session metrics. Geozone matching (`matchGeozone`, `applyGeozoneMatch`)
+    and creating segments from laps stay separate calls for the app: geozones and segments are user data that change
+    without re-analysing a session.
+  - The reference point for matching is the FIT start position, else the first sample with a position.
+  - Haversine uses the mean Earth radius 6 371 008.8 m. Polygons use the even-odd rule with straight edges in
+    latitude/longitude and must not cross the antimeridian; areas use a local equirectangular projection scaled at the
+    vertices' mean latitude. Several matches: the smallest area wins, ties by geozone id so the result does not depend
+    on the order of the geozones.
+  - Without a match a non-manual session is reset to `UNKNOWN` / `NONE` (also clearing an earlier geozone match);
+    a `MANUAL` surface is never changed.
+  - The property tests of spec 12 were added with the steps they belong to (7: time adds up; 8: efforts never overlap
+    or span gaps, noise creates no efforts; 9: adjacent windows add up). Step 10 adds geo properties.
+  - The Kotlin Notebook loads the built jars with `@file:DependsOn` paths relative to `notebooks/`; it has not been run
+    in this environment (no Kotlin Notebook kernel available).
+- **Alternatives:** let `analyze` take the geozones and return the match; a geodesic polygon test.
