@@ -43,6 +43,18 @@ class SessionApiTest : IntegrationTest() {
     }
 
     @Test
+    fun `uploads all golden files in one request and reports duplicates the second time`() {
+        val files = Golden.fitFileNames.map { it to Files.readAllBytes(Golden.fitFile(it)) }.toTypedArray()
+
+        val first = upload(*files).json.values().map { it["status"].asString() }
+        val second = upload(*files).json.values().map { it["status"].asString() }
+
+        first shouldBe List(files.size) { "CREATED" }
+        second shouldBe List(files.size) { "DUPLICATE" }
+        get("/api/sessions?size=100").json["totalItems"].asInt() shouldBe files.size
+    }
+
+    @Test
     fun `filters by start time and surface and pages the results`() {
         val (marchId, septemberId) = uploadGolden(march, september)
         patch(septemberId, mapOf("surface" to "SAND"))
