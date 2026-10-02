@@ -173,3 +173,27 @@ Newest entries at the bottom.
     published tables (spec 12).
   - The smoothing step returns domain `Sample`s; `inPause` is set by the pause detection (step 7).
 - **Alternatives:** shrink the window near the edges; mirror padding; leave edge samples unsmoothed.
+
+## 2026-10-02 — Time accounting convention (step 7)
+
+- **Context:** spec 9.1 calls the window bounds `from`, `to` inclusive, while the example in 9.2 gives `[600, 1200]` an
+  `elapsedSec` of 600, spec 12 requires `active + paused + gap = elapsed`, and spec 6.4 sums over `[startT, endT)`.
+  Counting both bounds as seconds would give 601 seconds for 600 elapsed.
+- **Decision:** a sample at `t` stands for the second `[t, t+1)`. A range `[fromT, toT]` covers the seconds
+  `fromT..toT−1` in every sum and count (time, distance, zones, heart rate, efforts by `startT`), so its duration is
+  `toT − fromT` and adjacent ranges, such as the two parts of a split segment, never share a second or an effort.
+  Both bounds stay valid `t` values in the API. A session `[0, lastT]` has `lastT` seconds, matching the FIT elapsed
+  time.
+- **Alternatives:** count both bounds, which breaks the spec 12 property and makes efforts at a segment boundary
+  belong to two segments.
+
+## 2026-10-02 — Pause details (step 7)
+
+- **Context:** spec 6.3 defines pauses and moving speed; some details are open.
+- **Decision:**
+  - Pauses are detected on the smoothed speed and never span a gap; each run between gaps is checked on its own.
+  - A pause covers its slow samples and the short excursions between them (`pauseSpikeToleranceSec`); excursions at
+    its edges are not part of it. Its length, compared with `minPauseDurationSec`, is the number of seconds it covers.
+  - Moving speed follows spec 6.3 literally, also for Smart-recorded sessions, where it then averages the recorded
+    seconds only (about a third of the samples).
+- **Alternatives:** detect pauses on the raw speed; let a pause bridge short gaps.

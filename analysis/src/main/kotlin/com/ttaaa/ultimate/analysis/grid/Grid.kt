@@ -1,5 +1,6 @@
 package com.ttaaa.ultimate.analysis.grid
 
+import com.ttaaa.ultimate.analysis.consecutiveRuns
 import com.ttaaa.ultimate.domain.GeoPoint
 import com.ttaaa.ultimate.domain.RecordingMode
 import java.time.Instant
@@ -17,18 +18,7 @@ data class Grid(
     val points: List<GridPoint>,
 ) {
     /** Maximal runs of consecutive seconds, as index ranges into [points]. Nothing may span two runs (spec 6.1). */
-    fun runs(): List<IntRange> {
-        if (points.isEmpty()) return emptyList()
-        val runs = mutableListOf<IntRange>()
-        var runStart = 0
-        for (i in 1..points.size) {
-            if (i == points.size || points[i].t != points[i - 1].t + 1) {
-                runs += runStart..<i
-                runStart = i
-            }
-        }
-        return runs
-    }
+    fun runs(): List<IntRange> = consecutiveRuns(points) { it.t }
 }
 
 /** One second of the [Grid]. */

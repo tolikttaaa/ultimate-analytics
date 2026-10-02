@@ -7,4 +7,7 @@ gaps: 0 s in 0:
 grid sha256: 4c948be8b4e12e3dfbc102b220313ff4a5e3c6f3fde2b3147c09c2ec831075d1
 smoothed speed: max 6.290 m/s
 GPS acceleration: min -1.570, max 1.396 m/s²
-samples sha256: 12040e8e2b3e92eb3aa67aecaf94f2128827a53726e8a926c842dedbed8ac6ad
+pauses: 83, longest 466 s
+time: elapsed 8632 s, active 1843 s, paused 6789 s, gap 0 s
+moving speed: 3.191 m/s
+samples sha256: f5b5d4f3b4dcf2c6a48390a5e05af2b08bed16f977de461cf69350cace487ead
