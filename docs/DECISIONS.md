@@ -394,3 +394,27 @@ Newest entries at the bottom.
     queries, so a new geozone that also classifies other sessions shows up everywhere.
   - No UI component library: plain React and CSS.
 - **Alternatives:** filters in component state only; one request per uploaded file.
+
+## 2026-10-02 — Session screen charts (step 16)
+
+- **Context:** spec 10.2 asks for three charts joined with `echarts.connect` and for `sampling: 'lttb'` on the lines.
+  In ECharts 6.1 the two do not work together.
+- **Decision:**
+  - **No `sampling`.** On hover, ECharts puts the index of the hovered point *in the sampled data* into the event that
+    `connect` forwards. The other charts sample their own values differently, so they find no point and draw no axis
+    pointer or tooltip. Unsampled, all three charts share the same `t` array and the indices match. Measured on the
+    longest golden session (9 430 s) in headless Chromium: load, hover and zoom take the same time with and without
+    lttb. A comment at the line series records this.
+  - The recorded speed is drawn through the recorded samples only and breaks in gaps of the series. With Smart
+    recording, most seconds have no sample, and a line broken at every one of them would be invisible. Tooltips list
+    values of the hovered second only.
+  - Time axis labels use the app's duration format (`m:ss`, `h:mm:ss` from one hour) rather than plain `mm:ss`.
+  - The segment strip follows the charts' zoom, so it stays aligned with the segment bands on the speed chart.
+  - The session screen is loaded on demand (its chunk is about 560 kB, nearly all ECharts, so the Vite warning limit
+    is 600 kB); only the ECharts parts in use are registered.
+  - `/series` columns are lists of nullable numbers; springdoc drops element nullability, so `SessionSeries` states it
+    with `@ArraySchema` for the generated types.
+  - The header sets the surface by hand (MANUAL) and offers *Recompute* always, highlighted for outdated sessions.
+    The map is a placeholder until step 17.
+- **Alternatives:** one ECharts instance with three grids and `axisPointer.link` (keeps lttb, but the spec names
+  `connect`); syncing the axis pointer by hand next to `connect`; `average` / `max` sampling (still differs by chart).

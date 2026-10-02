@@ -8,6 +8,10 @@ const backend = process.env.API_TARGET ?? 'http://localhost:8080'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  build: {
+    // The session screen is its own chunk of about 560 kB, nearly all ECharts; the rest of the app stays small.
+    chunkSizeWarningLimit: 600,
+  },
   server: {
     port: 5173,
     proxy: {

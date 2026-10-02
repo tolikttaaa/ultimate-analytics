@@ -316,3 +316,118 @@ input {
 .geozone-form {
   align-items: end;
 }
+
+.session-header {
+  margin-bottom: 12px;
+}
+
+.session-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.session-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.inline-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.notice {
+  margin: 10px 0 0;
+  padding: 6px 12px;
+  border-left: 3px solid var(--color-sand);
+  background: #fffaf0;
+  font-size: 13px;
+}
+
+.key-metrics {
+  display: flex;
+  gap: 32px;
+  margin: 12px 0 0;
+}
+
+.key-metrics dt {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.key-metrics dd {
+  margin: 2px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.session-body {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(360px, 1fr);
+  gap: 24px;
+}
+
+.segment-strip {
+  position: relative;
+  overflow: hidden;
+  height: 26px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  background: repeating-linear-gradient(135deg, #f6f8fa 0 6px, #eef1f4 6px 12px);
+}
+
+.segment {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+  padding: 4px 6px;
+  border-right: 1px solid #fff;
+  color: #fff;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.map-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  margin-bottom: 16px;
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  color: var(--color-muted);
+}
+
+.metrics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.metrics-table td,
+.metrics-table th {
+  padding: 3px 6px;
+  text-align: left;
+}
+
+.metrics-table .number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.metrics-table tr.group th {
+  padding-top: 12px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-weight: 600;
+}

@@ -10,6 +10,8 @@ import com.ttaaa.ultimate.domain.Sample
 import com.ttaaa.ultimate.domain.TimeRange
 import com.ttaaa.ultimate.domain.WindowMetrics
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -22,18 +24,28 @@ import java.util.UUID
 /**
  * The 1 Hz series of a session in columns, ready for the charts (spec 9.2): one entry per second `t = 0..lastT`,
  * all arrays of equal length, `null` in gaps. Speeds in m/s, GPS acceleration in m/s², heart rate in bpm.
+ *
+ * springdoc drops the nullability of list elements, so the annotations state it for the generated TypeScript types.
  */
 data class SessionSeries(
     val sessionId: UUID,
     val startTime: Instant,
     val t: List<Int>,
+    @field:ArraySchema(schema = Schema(types = ["number", "null"], format = "float"))
     val speed: List<Float?>,
+    @field:ArraySchema(schema = Schema(types = ["number", "null"], format = "float"))
     val speedRaw: List<Float?>,
+    @field:ArraySchema(schema = Schema(types = ["number", "null"], format = "float"))
     val accel: List<Float?>,
+    @field:ArraySchema(schema = Schema(types = ["integer", "null"], format = "int32"))
     val hr: List<Int?>,
+    @field:ArraySchema(schema = Schema(types = ["number", "null"], format = "double"))
     val lat: List<Double?>,
+    @field:ArraySchema(schema = Schema(types = ["number", "null"], format = "double"))
     val lon: List<Double?>,
+    @field:ArraySchema(schema = Schema(types = ["boolean", "null"]))
     val inPause: List<Boolean?>,
+    @field:ArraySchema(schema = Schema(types = ["boolean", "null"]))
     val interpolated: List<Boolean?>,
 )
 

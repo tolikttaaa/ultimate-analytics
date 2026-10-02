@@ -4,17 +4,22 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createQueryClient } from './api/queryClient'
-import { sessionPage, sessionSummary } from './test/data'
+import { sessionDetail, sessionPage, sessionSeries, sessionSummary } from './test/data'
+import { fakeApi } from './test/fakeApi'
 import { routes } from './routes'
 
-/** Answers the API calls of the app shell with fixed data. */
+// jsdom has no canvas.
+vi.mock('./components/charts/EChart', () => ({ EChart: () => null }))
+
+/** Answers the API calls of the screens with fixed data. */
 function stubApi() {
-  vi.stubGlobal('fetch', async (request: Request) => {
-    const path = new URL(request.url).pathname
-    const body = path === '/api/sessions'
-      ? sessionPage([sessionSummary({ startTime: '2026-09-30T16:07:47Z', localTzOffsetSec: 10800 })])
-      : { analysisVersion: 1, parameters: {} }
-    return new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } })
+  fakeApi({
+    'GET /api/sessions': () => sessionPage([sessionSummary({ startTime: '2026-09-30T16:07:47Z', localTzOffsetSec: 10800 })]),
+    'GET /api/sessions/s1': () => sessionDetail({ startTime: '2026-09-30T16:07:47Z', localTzOffsetSec: 10800 }),
+    'GET /api/sessions/s1/series': () => sessionSeries(),
+    'GET /api/sessions/s1/efforts': () => [],
+    'GET /api/drill-types': () => [],
+    'GET /api/analysis/parameters': () => ({ analysisVersion: 1, parameters: {} }),
   })
 }
 
@@ -38,10 +43,10 @@ describe('routes', () => {
     expect(await screen.findByText('analysis v1')).toBeInTheDocument()
   })
 
-  it('routes to the session screen', async () => {
+  it('loads the session screen on demand', async () => {
     stubApi()
     renderAt('/sessions/s1')
-    expect(await screen.findByRole('heading', { name: 'Session s1' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: '2026-09-30 19:07' })).toBeInTheDocument()
   })
 
   it('shows not found for unknown paths', async () => {

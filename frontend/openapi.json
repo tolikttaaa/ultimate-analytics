@@ -1772,40 +1772,40 @@
           "accel" : {
             "type" : "array",
             "items" : {
-              "type" : "number",
+              "type" : [ "number", "null" ],
               "format" : "float"
             }
           },
           "hr" : {
             "type" : "array",
             "items" : {
-              "type" : "integer",
+              "type" : [ "integer", "null" ],
               "format" : "int32"
             }
           },
           "inPause" : {
             "type" : "array",
             "items" : {
-              "type" : "boolean"
+              "type" : [ "boolean", "null" ]
             }
           },
           "interpolated" : {
             "type" : "array",
             "items" : {
-              "type" : "boolean"
+              "type" : [ "boolean", "null" ]
             }
           },
           "lat" : {
             "type" : "array",
             "items" : {
-              "type" : "number",
+              "type" : [ "number", "null" ],
               "format" : "double"
             }
           },
           "lon" : {
             "type" : "array",
             "items" : {
-              "type" : "number",
+              "type" : [ "number", "null" ],
               "format" : "double"
             }
           },
@@ -1816,14 +1816,14 @@
           "speed" : {
             "type" : "array",
             "items" : {
-              "type" : "number",
+              "type" : [ "number", "null" ],
               "format" : "float"
             }
           },
           "speedRaw" : {
             "type" : "array",
             "items" : {
-              "type" : "number",
+              "type" : [ "number", "null" ],
               "format" : "float"
             }
           },
