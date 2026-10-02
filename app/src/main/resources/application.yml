@@ -12,6 +12,15 @@ spring:
     active: local
   lifecycle:
     timeout-per-shutdown-phase: 30s
+  mvc:
+    # Errors as RFC 7807 application/problem+json (spec 9)
+    problemdetails:
+      enabled: true
+  servlet:
+    multipart:
+      # Hard ceilings for a whole upload request; the per-file limit is app.upload.max-file-size, reported per file.
+      max-file-size: 200MB
+      max-request-size: 500MB
   flyway:
     # Migrations come from the infra:db-migrations jar (classpath:db/migration).
     # Disabled where a separate migration job runs them (future server profile).
