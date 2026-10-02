@@ -25,7 +25,10 @@ internal fun <T> consecutiveRuns(items: List<T>, t: (T) -> Int): List<IntRange> 
 fun List<Sample>.runs(): List<IntRange> = consecutiveRuns(this) { it.t }
 
 /** The samples of the seconds covered by [range] (`fromT <= t < toT`) in samples sorted by `t`. */
-fun List<Sample>.inRange(range: TimeRange): List<Sample> = subList(lowerBound(range.fromT), lowerBound(range.toT))
+fun List<Sample>.inRange(range: TimeRange): List<Sample> = indicesIn(range).let { subList(it.first, it.last + 1) }
+
+/** Indices of the samples of the seconds covered by [range] in samples sorted by `t`. */
+fun List<Sample>.indicesIn(range: TimeRange): IntRange = lowerBound(range.fromT)..<lowerBound(range.toT)
 
 private fun List<Sample>.lowerBound(t: Int): Int {
     val index = binarySearchBy(t) { it.t }

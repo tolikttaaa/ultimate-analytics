@@ -27,6 +27,11 @@ data class AnalysisParameters(
     val sgOrder: Int = 2,
     /** Samples below this speed are walking and do not count towards moving speed, m/s (spec 6.3). */
     val walkSpeedThreshold: Double = 2.0,
+    /**
+     * Seconds slower than this cover no distance in window metrics, m/s: while standing, the watch's Doppler speed
+     * stays around 0.5 m/s and would add kilometres of phantom distance (docs/DECISIONS.md).
+     */
+    val minDistanceSpeed: Double = 1.0,
     /** A pause is a run of samples below this speed, m/s (spec 6.3). */
     val pauseSpeedThreshold: Double = 1.5,
     /** Minimum length of a pause, s (spec 6.3). */
@@ -55,6 +60,8 @@ data class AnalysisParameters(
     val speedZones: List<Double> = listOf(1.0, 2.0, 4.0, 5.5, 7.0),
     /** Maximum heart rate for the HR zones, bpm (user setting). */
     val hrMax: Int = 190,
+    /** Lower bounds of the 5 heart-rate zones, % of [hrMax] (spec 6.5); time below the first is in no zone. */
+    val hrZoneLowerBoundsPct: List<Int> = listOf(50, 60, 70, 80, 90),
 ) {
     init {
         require(maxInterpolationGapSec >= 0) { "maxInterpolationGapSec must not be negative" }
@@ -66,6 +73,7 @@ data class AnalysisParameters(
         require(sgWindow >= 3 && sgWindow % 2 == 1) { "sgWindow must be odd and at least 3" }
         require(sgOrder in 1..<sgWindow) { "sgOrder must be at least 1 and below sgWindow" }
         require(walkSpeedThreshold > 0.0) { "walkSpeedThreshold must be positive" }
+        require(minDistanceSpeed >= 0.0) { "minDistanceSpeed must not be negative" }
         require(pauseSpeedThreshold > 0.0) { "pauseSpeedThreshold must be positive" }
         require(minPauseDurationSec > 0) { "minPauseDurationSec must be positive" }
         require(pauseSpikeToleranceSec >= 0) { "pauseSpikeToleranceSec must not be negative" }
@@ -86,5 +94,14 @@ data class AnalysisParameters(
             "speedZones must be positive and strictly increasing"
         }
         require(hrMax > 0) { "hrMax must be positive" }
+        require(hrZoneLowerBoundsPct.size == HR_ZONES) { "hrZoneLowerBoundsPct needs $HR_ZONES bounds" }
+        require(hrZoneLowerBoundsPct.first() > 0 && hrZoneLowerBoundsPct.zipWithNext().all { (a, b) -> a < b }) {
+            "hrZoneLowerBoundsPct must be positive and strictly increasing"
+        }
+    }
+
+    companion object {
+        /** Number of heart-rate zones (spec 6.5). */
+        const val HR_ZONES = 5
     }
 }

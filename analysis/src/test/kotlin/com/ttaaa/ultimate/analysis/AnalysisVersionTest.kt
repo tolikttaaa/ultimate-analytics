@@ -19,6 +19,7 @@ class AnalysisVersionTest {
             sgWindow = 5,
             sgOrder = 2,
             walkSpeedThreshold = 2.0,
+            minDistanceSpeed = 1.0,
             pauseSpeedThreshold = 1.5,
             minPauseDurationSec = 20,
             pauseSpikeToleranceSec = 2,
@@ -33,6 +34,7 @@ class AnalysisVersionTest {
             decelThreshold = -1.5,
             speedZones = listOf(1.0, 2.0, 4.0, 5.5, 7.0),
             hrMax = 190,
+            hrZoneLowerBoundsPct = listOf(50, 60, 70, 80, 90),
         ),
     )
 

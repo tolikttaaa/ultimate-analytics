@@ -1,5 +1,7 @@
 package com.ttaaa.ultimate.analysis
 
+import com.ttaaa.ultimate.domain.Effort
+import com.ttaaa.ultimate.domain.EffortMetrics
 import com.ttaaa.ultimate.domain.GeoPoint
 import com.ttaaa.ultimate.domain.RawRecord
 import com.ttaaa.ultimate.domain.RawSession
@@ -41,8 +43,33 @@ object RawSessions {
     fun timer(t: Int, type: TimerEventType) = TimerEvent(T0.plusSeconds(t.toLong()), type)
 
     /** A smoothed sample as the later pipeline steps see it. */
-    fun sample(t: Int, speed: Double, interpolated: Boolean = false, inPause: Boolean = false, accel: Double = 0.0) =
-        Sample(t, T0.plusSeconds(t.toLong()), null, speed, speed, accel, null, null, null, interpolated, inPause)
+    fun sample(
+        t: Int,
+        speed: Double,
+        interpolated: Boolean = false,
+        inPause: Boolean = false,
+        accel: Double = 0.0,
+        hr: Int? = null,
+    ) = Sample(t, T0.plusSeconds(t.toLong()), null, speed, speed, accel, hr, null, null, interpolated, inPause)
+
+    /** An effort starting at [startT] with the given metrics; times and other metrics are placeholders. */
+    fun effort(
+        startT: Int,
+        peakSpeed: Double = 6.0,
+        meanSpeed: Double = 4.0,
+        meanAccel: Double = 1.5,
+        peakAccel: Double = 2.0,
+        meanSpeedFirst3s: Double? = 4.0,
+        timeTo80PctPeakSec: Double = 2.0,
+    ) = Effort(
+        startT, startT, startT,
+        EffortMetrics(
+            startSpeed = 0.0, peakSpeed = peakSpeed, timeToPeakSec = 1, durationSec = 1, distanceM = 0.0,
+            meanSpeed = meanSpeed, meanAccel = meanAccel, peakAccel = peakAccel, speedAt1s = null, speedAt2s = null,
+            speedAt3s = null, meanSpeedFirst3s = meanSpeedFirst3s, distanceFirst3s = 0.0,
+            timeTo80PctPeakSec = timeTo80PctPeakSec, maxDecelAfter = 0.0, hrStart = null, hrMax = null,
+        ),
+    )
 
     /** Consecutive samples from [fromT], given as (seconds, speed) parts. */
     fun samples(fromT: Int, vararg parts: Pair<Int, Double>): List<Sample> {

@@ -26,6 +26,7 @@ class AnalysisParametersTest {
             "SG window below 3" to { defaults.copy(sgWindow = 1, sgOrder = 0) },
             "SG order 0" to { defaults.copy(sgOrder = 0) },
             "SG order not below window" to { defaults.copy(sgOrder = 5) },
+            "negative distance speed" to { defaults.copy(minDistanceSpeed = -0.1) },
             "zero pause duration" to { defaults.copy(minPauseDurationSec = 0) },
             "negative spike tolerance" to { defaults.copy(pauseSpikeToleranceSec = -1) },
             "zero start acceleration" to { defaults.copy(effortStartAccel = 0.0) },
@@ -38,6 +39,8 @@ class AnalysisParametersTest {
             "decreasing speed zones" to { defaults.copy(speedZones = listOf(1.0, 4.0, 2.0, 5.5, 7.0)) },
             "zero first speed zone" to { defaults.copy(speedZones = listOf(0.0, 2.0, 4.0, 5.5, 7.0)) },
             "zero max heart rate" to { defaults.copy(hrMax = 0) },
+            "four HR zones" to { defaults.copy(hrZoneLowerBoundsPct = listOf(50, 60, 70, 80)) },
+            "decreasing HR zones" to { defaults.copy(hrZoneLowerBoundsPct = listOf(50, 70, 60, 80, 90)) },
         )
 
         invalid.forEach { (case, build) ->

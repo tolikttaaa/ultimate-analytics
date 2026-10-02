@@ -6,13 +6,14 @@ package com.ttaaa.ultimate.domain
  * (no moving samples, no efforts, no heart rate) are null.
  */
 data class WindowMetrics(
-    val range: TimeRange,
+    /** The window; null for totals across sessions (drill-type aggregation). */
+    val range: TimeRange?,
     val time: TimeMetrics,
     val distance: DistanceMetrics,
     /** One entry per [SpeedZone], in zone order. */
     val zones: List<SpeedZoneMetrics>,
     val efforts: EffortStats,
-    /** Runs of `accel ≤ decelThreshold` lasting at least 1 s. */
+    /** Runs of `accel ≤ decelThreshold` lasting at least 1 s, counted in the window where they start. */
     val decelCount: Int,
     val fatigue: FatigueMetrics,
     val heartRate: HeartRateMetrics,
@@ -70,6 +71,9 @@ data class FatigueMetrics(
 data class HeartRateMetrics(
     val avg: Double?,
     val max: Int?,
-    /** Time in the 5 heart-rate zones (50/60/70/80/90 % of `hrMax`) as % of the window; empty without HR data. */
+    /**
+     * Time in the 5 heart-rate zones (lower bounds `hrZoneLowerBoundsPct` of `hrMax`) as % of the seconds with heart
+     * rate; the rest is below the first zone. Empty without HR data.
+     */
     val zonesPct: List<Double>,
 )

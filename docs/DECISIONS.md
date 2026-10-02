@@ -219,3 +219,29 @@ Newest entries at the bottom.
   - The 80 %, 3 s, +3 s and +10 s of the metric definitions are named constants, not parameters: they define what a
     metric means, while parameters are detection thresholds.
 - **Alternatives:** search after the end of rejected candidates too; let the look-back reach into the previous effort.
+
+## 2026-10-02 — Window metrics and aggregation details (step 9)
+
+- **Context:** spec 6.5 lists the window metrics but leaves several definitions open.
+- **Decision:**
+  - **Distance (chosen by the user):** `distanceM`, `activeDistanceM` and zone distances sum the smoothed speed per
+    second, but seconds below the new parameter `minDistanceSpeed` (1.0 m/s) cover no distance. While standing, the
+    watch's Doppler speed averages 0.45-0.55 m/s; summing it gave 30-60 % more distance than the watch. With the floor
+    the golden sessions come out 2-15 % below the watch's distance (to calibrate in M0). Effort distances keep the
+    definition of spec 6.4.
+  - **Speed zones** count every second of the window, paused ones included; upper bounds are exclusive, so zone times
+    add up to `elapsedSec − gapSec`.
+  - **Decelerations** are runs of `accel ≤ decelThreshold` (at 1 Hz every run lasts at least 1 s), counted in the window
+    where they start and ended by a gap, so the counts of adjacent windows add up.
+  - **Fatigue:** the first and last third are ⌊n/3⌋ efforts each, ordered by start; at least 6 efforts.
+  - **Heart-rate zones:** lower bounds are the new parameter `hrZoneLowerBoundsPct` (50/60/70/80/90 % of `hrMax`, also
+    answering spec 14 on custom zones). `zonesPct` is the share of the seconds with heart rate; time below the first
+    zone is in none, so the five values can add up to less than 100.
+  - **Efforts per active minute** and the effort statistics use the efforts that start in the window; bests are the
+    maximum, except `timeTo80PctPeakSec`, where lower is better.
+  - **Aggregation** (drill types, per-session totals): counts, durations, distances, zones and decelerations are summed;
+    effort means and fatigue are weighted by effort count, moving speed by active seconds and heart rate by recorded
+    seconds (`elapsedSec − gapSec`); maxima and bests are the best of the windows. `WindowMetrics.range` is null for
+    such totals. For adjacent windows of one session the totals equal the metrics of the whole window (property test).
+- **Alternatives:** the watch's cumulative distance; the plain sum of speed; counting time below 50 % HR in zone 1;
+  clipping deceleration runs to the window.

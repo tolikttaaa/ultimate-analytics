@@ -14,3 +14,8 @@ samples sha256: cad30e367956c5520719b0d66d60d2d86d384ae8e918102926516f26340e0cd7
 efforts: 26, peak speed mean 5.716 max 8.241 m/s, duration mean 7.731 s
 first 3 s: mean speed 3.018 m/s, time to 80 % of peak 3.153 s
 efforts sha256: f22f7839033443bc6c92b9689f24505e0e91a17ddb50f5e5a0fecab79be05e2f
+distance: 4944.749 m (watch: 5333.210 m), active 3543.171 m
+speed zones (s): STAND 5210, WALK 1832, JOG 577, RUN 120, HIGH_SPEED 33, SPRINT 13
+decelerations: 3, fatigue: 2.485 %
+heart rate: avg 148.426, max 183 bpm, zones % [0.527, 9.852, 50.225, 30.482, 8.401]
+session metrics sha256: 8e404ab2be9626bdb4caa68e2ca16117088b49f745799cc25931e94df9f83c23

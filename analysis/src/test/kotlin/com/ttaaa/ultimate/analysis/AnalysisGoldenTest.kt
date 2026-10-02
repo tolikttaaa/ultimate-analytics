@@ -5,6 +5,7 @@ import com.ttaaa.ultimate.analysis.grid.Grid
 import com.ttaaa.ultimate.analysis.grid.buildGrid
 import com.ttaaa.ultimate.analysis.metrics.movingSpeed
 import com.ttaaa.ultimate.analysis.metrics.timeMetrics
+import com.ttaaa.ultimate.analysis.metrics.windowMetrics
 import com.ttaaa.ultimate.analysis.pause.detectPauses
 import com.ttaaa.ultimate.analysis.pause.markPauses
 import com.ttaaa.ultimate.analysis.smoothing.smooth
@@ -80,6 +81,18 @@ class AnalysisGoldenTest {
                 "time to 80 % of peak ${metrics.map { it.timeTo80PctPeakSec }.average().format()} s",
         )
         appendLine("efforts sha256: ${Golden.sha256(efforts.joinToString("\n"))}")
+        val window = windowMetrics(samples, efforts, session, params)
+        appendLine(
+            "distance: ${window.distance.distanceM.format()} m (watch: ${raw.totalDistanceM?.format()} m), " +
+                "active ${window.distance.activeDistanceM.format()} m",
+        )
+        appendLine("speed zones (s): ${window.zones.joinToString { "${it.zone} ${it.timeSec}" }}")
+        appendLine("decelerations: ${window.decelCount}, fatigue: ${window.fatigue.peakSpeedDropPct?.format()} %")
+        appendLine(
+            "heart rate: avg ${window.heartRate.avg?.format()}, max ${window.heartRate.max} bpm, " +
+                "zones % ${window.heartRate.zonesPct.map { it.format() }}",
+        )
+        appendLine("session metrics sha256: ${Golden.sha256(window.toString())}")
     }
 
     private fun Double.format() = String.format(Locale.ROOT, "%.3f", this)
