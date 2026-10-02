@@ -78,3 +78,29 @@ Newest entries at the bottom.
   - V1 adds to the spec 8.1 sketch only check constraints (`session.surface`, `session.surface_source`, ordering of
     segment and effort times) and indexes on `session.start_time` and the foreign keys.
 - **Alternatives:** Postgres 18; ports on all interfaces; failing when `.env` is missing.
+
+## 2026-10-02 — Domain model details (step 3)
+
+- **Context:** spec 5 gives a sketch of the domain types; some details are open or would conflict with other sections.
+- **Decision:**
+  - Derived data carries no identity: `Sample`, `Lap` and `Effort` have no ids. The analysis must produce
+    byte-identical results for the same input (spec 11), so it cannot generate random effort ids; the app adds the id
+    and the segment an effort belongs to when it stores it (spec 8.2). User data (`Session`, `Segment`, `DrillType`,
+    `Geozone`) has ids.
+  - Positions are a `GeoPoint(lat, lon)` value (`Sample.position`, `Session.startPosition`, circle centre, polygon
+    vertices) instead of separate fields or `Pair<Double, Double>`, whose order is easy to confuse with GeoJSON's
+    `[lon, lat]`. Polygon rings list each vertex once (not closed).
+  - A gap is a missing `t`: samples exist only for recorded or interpolated seconds, matching the `sample` table.
+  - `Session.startPosition` holds the resolved geozone reference point (FIT start position, else the first valid sample
+    position, spec 6.6), so geozone edits can re-match sessions without loading samples.
+  - `WindowMetrics` is a domain type because `MetricsSnapshot` stores it; its shape follows the JSON in spec 9.2
+    (`movingPaceSecPerKm` rather than 6.5's `movingPace`). Values that need missing data are null.
+  - `TimeRange.overlaps` means "share at least one second": ranges that only touch do not overlap, so split and
+    adjacent segments are valid.
+  - Constructors check local invariants only: segment minimum duration (10 s), effort time order, lowercase hex
+    SHA-256, drill type code `[A-Z0-9_]+` and colour `#RRGGBB`, geozone surface GRASS/SAND, parameter consistency
+    (odd SG window, order below window, five increasing speed-zone bounds, ...). Rules that need the whole session
+    (segment inside the session, no overlap) stay in the service layer.
+  - `ANALYSIS_VERSION` lives in `analysis` (spec 8.2). `AnalysisVersionTest` keeps the defaults of every version and
+    fails when a default changes without a version bump.
+- **Alternatives:** follow the sketch literally (ids on efforts, lat/lon pairs); define `WindowMetrics` in step 9.
