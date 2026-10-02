@@ -324,4 +324,8 @@ Newest entries at the bottom.
   - Drill type codes are trimmed and stored in upper case; a duplicate code is a 409. Drill type stats aggregate the
     cached segment metrics per session and in total (weights of step 9); `from`/`to`/`surface` filter the sessions as
     in the sessions list; per-session rows are in time order for the trend chart.
+  - Geozone shapes use the same JSON in the API as in the database (spec 8.1); polygons have exactly one ring (no
+    holes), closed or not. Creating, editing and deleting a geozone all re-run the matching for every non-MANUAL
+    session and return the number of sessions whose geozone or surface changed; a deleted geozone first leaves its
+    sessions through the foreign key, then they are matched again.
 - **Alternatives:** JSON Merge Patch documents; recomputing segment snapshots immediately.
