@@ -5,7 +5,9 @@
 FROM eclipse-temurin:21-jdk AS build
 WORKDIR /workspace
 COPY . .
+# The bootJar includes the SPA, built by the node-gradle plugin with a downloaded Node.js.
 RUN --mount=type=cache,target=/root/.gradle \
+    --mount=type=cache,target=/root/.npm \
     ./gradlew :app:bootJar --no-daemon --console=plain
 RUN java -Djarmode=tools -jar app/build/libs/ultimate-analytics.jar extract --layers --destination extracted
 

@@ -19,4 +19,6 @@ include(
     "analysis",
     "infra:db-migrations",
     "app",
+    // React SPA, built with npm (not a JVM module)
+    "frontend",
 )

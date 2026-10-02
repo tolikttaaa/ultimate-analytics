@@ -44,8 +44,12 @@ with Swagger UI at `http://localhost:8080/swagger-ui.html`. Upload FIT files or 
 ### Frontend dev server
 
 ```sh
-cd frontend && npm run dev           # Vite dev server, proxies /api to the app
+cd frontend && npm install && npm run dev   # http://localhost:5173, proxies /api to the app on :8080
 ```
+
+`./gradlew build` builds the frontend into the app jar (it downloads Node.js itself) and runs its tests and lint.
+The TypeScript API types are generated from `frontend/openapi.json`, a snapshot of the API that a backend test keeps
+in sync: after an API change, run `./gradlew :app:test -PupdateGolden`, then fix what the frontend build reports.
 
 ## Build and test
 

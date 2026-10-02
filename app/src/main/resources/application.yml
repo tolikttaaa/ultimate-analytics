@@ -50,3 +50,7 @@ app:
   analysis:
     # Maximum heart rate for the HR zones (spec 6.2)
     hr-max: 190
+
+springdoc:
+  # Stable key order, so the OpenAPI snapshot the frontend types are generated from only changes with the API.
+  writer-with-order-by-keys: true

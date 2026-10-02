@@ -13,7 +13,15 @@ kotlin {
     }
 }
 
+/** The built SPA of :frontend, served as static resources (spec 7.1). */
+val frontend = configurations.create("frontend") {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
 dependencies {
+    frontend(project(path = ":frontend", configuration = "dist"))
+
     implementation(platform(SpringBootPlugin.BOM_COORDINATES))
 
     implementation(project(":domain"))
@@ -38,11 +46,20 @@ dependencies {
     testImplementation(libs.testcontainers.postgresql)
 }
 
+tasks.processResources {
+    from(frontend) {
+        into("static")
+    }
+}
+
 tasks.test {
     // The golden FIT files of spec 12 serve as real uploads in the integration tests.
     val goldenFitDir = rootDir.resolve("fit-parser/src/test/resources/fit")
     inputs.dir(goldenFitDir).withPropertyName("goldenFitFiles").withPathSensitivity(PathSensitivity.RELATIVE)
     systemProperty("golden.fit.dir", goldenFitDir.absolutePath)
+    // The OpenAPI snapshot the frontend generates its API types from (spec 10.3, 12); `-PupdateGolden` rewrites it.
+    systemProperty("openapi.snapshot", rootDir.resolve("frontend/openapi.json").absolutePath)
+    systemProperty("golden.update", providers.gradleProperty("updateGolden").isPresent)
 }
 
 tasks.bootJar {

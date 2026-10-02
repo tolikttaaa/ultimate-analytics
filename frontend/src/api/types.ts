@@ -1,0 +1,10 @@
+import type { components } from './schema'
+
+/* Names for the generated API types; the types themselves come from openapi.json (no hand-written DTOs). */
+type Schemas = components['schemas']
+
+export type SessionSummary = Schemas['SessionSummary']
+export type SessionDetail = Schemas['SessionDetail']
+export type SessionPage = Schemas['PageSessionSummary']
+export type Surface = SessionSummary['surface']
+export type AnalysisParameters = Schemas['AnalysisParametersDto']

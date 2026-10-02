@@ -355,3 +355,26 @@ Newest entries at the bottom.
     `infra/scripts/helm-check.sh` (`helm lint --strict` and `helm template`) with Helm 4.3.
 - **Alternatives:** a separate Flyway image for migrations; relying on Spring Boot's default security
   (form login with a generated password); copying the profile config into the chart.
+
+## 2026-10-02 — Frontend scaffold and API contract (step 14)
+
+- **Context:** spec 10.3 and 12 ask for TypeScript types generated from the OpenAPI description and for breaking API
+  changes to fail the frontend build; spec 7.1 builds the frontend with Gradle into the app.
+- **Decision:**
+  - `frontend/openapi.json` is a committed snapshot of `/v3/api-docs`. `OpenApiSnapshotTest` fails when the API and
+    the snapshot differ (`-PupdateGolden` updates it); the frontend build generates `src/api/schema.d.ts` from it with
+    openapi-typescript (not committed) and type-checks against it. A breaking API change therefore fails the backend
+    test first and, once the snapshot is updated, the frontend build wherever the change matters. The frontend build
+    needs no running backend.
+  - The OpenAPI document is made deterministic (sorted keys, relative server `/`), and every non-nullable property is
+    marked required, so the generated types match the Kotlin types (`activeSec: number`, `maxSpeed?: number | null`).
+  - Stack from the official Vite React-TS template: Vite 8, React 19, TypeScript 6.0 and oxlint; plus TanStack Query 5,
+    React Router 8, openapi-fetch as the typed client (API errors become `ApiError` with the problem detail), Vitest
+    with Testing Library. openapi-typescript declares `typescript ^5` as peer; an npm `overrides` entry lets it use
+    the project's TypeScript 6.0, with which it works.
+  - `:frontend` is a Gradle project with the node-gradle plugin (Node.js 24 LTS downloaded, `npm ci`); its npm build,
+    test and lint scripts have up-to-date checks and run in `assemble` / `check`. The app copies the `dist` artifact
+    into `static/`.
+  - The app answers client-side routes (`/sessions/{id}`, ...) with `index.html`; `/api`, `/actuator`, `/v3`,
+    `/swagger-ui` and file-like paths keep their 404.
+- **Alternatives:** generating types from a running backend; committing the generated types; TypeScript 5.9.

@@ -1,0 +1,2040 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "description" : "Sprint analytics for Ultimate Frisbee trainings. Times inside a session are integer seconds `t` from its first sample; units are m, s, m/s, m/s² and bpm. Acceleration values are derived from 1 Hz GPS speed.",
+    "title" : "Ultimate Analytics API",
+    "version" : "v1"
+  },
+  "servers" : [ {
+    "url" : "/"
+  } ],
+  "paths" : {
+    "/api/analysis/parameters" : {
+      "get" : {
+        "operationId" : "parameters",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnalysisParametersDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The current analysis parameters and analysis version (read-only)",
+        "tags" : [ "Recompute" ]
+      }
+    },
+    "/api/drill-types" : {
+      "get" : {
+        "operationId" : "list_1",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/DrillType"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Drill types" ]
+      },
+      "post" : {
+        "operationId" : "create_2",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DrillTypeCreate"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DrillType"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "summary" : "Create a drill type; 409 if the code exists",
+        "tags" : [ "Drill types" ]
+      }
+    },
+    "/api/drill-types/{id}" : {
+      "delete" : {
+        "operationId" : "delete_3",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "summary" : "Delete a drill type; its segments become untyped",
+        "tags" : [ "Drill types" ]
+      },
+      "patch" : {
+        "operationId" : "update_3",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DrillTypePatch"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DrillType"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Drill types" ]
+      }
+    },
+    "/api/drill-types/{id}/stats" : {
+      "get" : {
+        "operationId" : "stats",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "query",
+          "name" : "from",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "in" : "query",
+          "name" : "surface",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "GRASS", "SAND", "UNKNOWN" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DrillTypeStatsDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Metrics of all segments of the drill type, optionally filtered by session start time and surface",
+        "tags" : [ "Drill types" ]
+      }
+    },
+    "/api/geozones" : {
+      "get" : {
+        "operationId" : "list",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/GeozoneDto"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Geozones" ]
+      },
+      "post" : {
+        "operationId" : "create_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GeozoneCreate"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GeozoneChangeDto"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "summary" : "Create a geozone and match all sessions again (except manual surfaces)",
+        "tags" : [ "Geozones" ]
+      }
+    },
+    "/api/geozones/{id}" : {
+      "delete" : {
+        "operationId" : "delete_2",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GeozoneChangeDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Delete a geozone and match its sessions again; returns the number of affected sessions",
+        "tags" : [ "Geozones" ]
+      },
+      "patch" : {
+        "operationId" : "update_2",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GeozonePatch"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GeozoneChangeDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Edit a geozone and match all sessions again; returns the number of affected sessions",
+        "tags" : [ "Geozones" ]
+      }
+    },
+    "/api/sessions" : {
+      "get" : {
+        "operationId" : "list_2",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "from",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "in" : "query",
+          "name" : "surface",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "GRASS", "SAND", "UNKNOWN" ]
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageSessionSummary"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "List sessions, newest first; `from` and `to` filter the start time, `to` exclusive",
+        "tags" : [ "Sessions" ]
+      }
+    },
+    "/api/sessions/recompute-outdated" : {
+      "post" : {
+        "operationId" : "recomputeOutdated",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RecomputeOutdatedResult"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Recompute every session analysed with an older analysis version",
+        "tags" : [ "Recompute" ]
+      }
+    },
+    "/api/sessions/upload" : {
+      "post" : {
+        "operationId" : "upload",
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "files" : {
+                    "type" : "array",
+                    "items" : {
+                      "type" : "string",
+                      "format" : "binary"
+                    }
+                  }
+                },
+                "required" : [ "files" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/UploadResult"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Upload .fit files or .zip archives of them; one result per FIT file",
+        "tags" : [ "Sessions" ]
+      }
+    },
+    "/api/sessions/{id}" : {
+      "delete" : {
+        "operationId" : "delete",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "summary" : "Delete the session and its raw file",
+        "tags" : [ "Sessions" ]
+      },
+      "get" : {
+        "operationId" : "detail",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SessionDetail"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "Sessions" ]
+      },
+      "patch" : {
+        "operationId" : "update",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SessionPatch"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SessionDetail"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Set the surface (becomes MANUAL) and/or the notes",
+        "tags" : [ "Sessions" ]
+      }
+    },
+    "/api/sessions/{id}/efforts" : {
+      "get" : {
+        "operationId" : "efforts",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/EffortDto"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The detected efforts (sprints) with their metrics, in time order",
+        "tags" : [ "Series and metrics" ]
+      }
+    },
+    "/api/sessions/{id}/file" : {
+      "get" : {
+        "operationId" : "file",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Download the original FIT file",
+        "tags" : [ "Sessions" ]
+      }
+    },
+    "/api/sessions/{id}/metrics" : {
+      "get" : {
+        "description" : "`from` and `to` are seconds `t` within [0, elapsedSec]; the window covers the seconds from..to-1, so its elapsed time is to - from. Efforts belong to it when they start in it.",
+        "operationId" : "windowMetrics",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "query",
+          "name" : "from",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WindowMetrics"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Metrics of the window [from, to], computed live",
+        "tags" : [ "Series and metrics" ]
+      }
+    },
+    "/api/sessions/{id}/recompute" : {
+      "post" : {
+        "operationId" : "recompute",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SessionDetail"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Analyse the session again from its raw file; segments, notes and a manual surface stay",
+        "tags" : [ "Recompute" ]
+      }
+    },
+    "/api/sessions/{id}/segments" : {
+      "post" : {
+        "operationId" : "create",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SegmentCreate"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SegmentDto"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "summary" : "Create a segment; 409 if it overlaps another one",
+        "tags" : [ "Segments" ]
+      }
+    },
+    "/api/sessions/{id}/segments/merge" : {
+      "post" : {
+        "operationId" : "merge",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SegmentMerge"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SegmentDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Merge consecutive segments; the first keeps its drill type and label",
+        "tags" : [ "Segments" ]
+      }
+    },
+    "/api/sessions/{id}/segments/reset-from-laps" : {
+      "post" : {
+        "operationId" : "resetFromLaps",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "query",
+          "name" : "confirm",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SegmentDto"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Replace all segments with the lap-based ones; requires confirm=true",
+        "tags" : [ "Segments" ]
+      }
+    },
+    "/api/sessions/{id}/segments/{segmentId}" : {
+      "delete" : {
+        "operationId" : "delete_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "segmentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "Segments" ]
+      },
+      "patch" : {
+        "operationId" : "update_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "segmentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SegmentPatch"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SegmentDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Edit bounds, drill type or label; 409 if the new bounds overlap another segment",
+        "tags" : [ "Segments" ]
+      }
+    },
+    "/api/sessions/{id}/segments/{segmentId}/metrics" : {
+      "get" : {
+        "operationId" : "metrics",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "segmentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WindowMetrics"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Metrics of the segment (cached)",
+        "tags" : [ "Segments" ]
+      }
+    },
+    "/api/sessions/{id}/segments/{segmentId}/split" : {
+      "post" : {
+        "operationId" : "split",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "segmentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SegmentSplit"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SegmentDto"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Split a segment at atT; both parts keep its drill type and label",
+        "tags" : [ "Segments" ]
+      }
+    },
+    "/api/sessions/{id}/series" : {
+      "get" : {
+        "operationId" : "series",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SessionSeries"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The full 1 Hz series in columns; null marks gaps",
+        "tags" : [ "Series and metrics" ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "AnalysisParameters" : {
+        "type" : "object",
+        "properties" : {
+          "decelThreshold" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "effortEndMinSpeed" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "effortEndPeakRatio" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "effortMaxDurationSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "effortMinDurationSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "effortMinPeakSpeed" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "effortMinSpeedGain" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "effortStartAccel" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "effortStartLookbackSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "everySecondRecordingMinShare" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "hrMax" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "hrZoneLowerBoundsPct" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "maxInterpolationGapSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "maxPlausibleSpeed" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "minDistanceSpeed" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "minPauseDurationSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "pauseSpeedThreshold" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "pauseSpikeToleranceSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "sgOrder" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "sgWindow" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "smartRecordingMaxGapSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "speedZones" : {
+            "type" : "array",
+            "items" : {
+              "type" : "number",
+              "format" : "double"
+            }
+          },
+          "walkSpeedThreshold" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        },
+        "required" : [ "decelThreshold", "effortEndMinSpeed", "effortEndPeakRatio", "effortMaxDurationSec", "effortMinDurationSec", "effortMinPeakSpeed", "effortMinSpeedGain", "effortStartAccel", "effortStartLookbackSec", "everySecondRecordingMinShare", "hrMax", "hrZoneLowerBoundsPct", "maxInterpolationGapSec", "maxPlausibleSpeed", "minDistanceSpeed", "minPauseDurationSec", "pauseSpeedThreshold", "pauseSpikeToleranceSec", "sgOrder", "sgWindow", "smartRecordingMaxGapSec", "speedZones", "walkSpeedThreshold" ]
+      },
+      "AnalysisParametersDto" : {
+        "type" : "object",
+        "properties" : {
+          "analysisVersion" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "parameters" : {
+            "$ref" : "#/components/schemas/AnalysisParameters"
+          }
+        },
+        "required" : [ "analysisVersion", "parameters" ]
+      },
+      "DistanceMetrics" : {
+        "type" : "object",
+        "properties" : {
+          "activeDistanceM" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "distanceM" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "maxSpeed" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "movingPaceSecPerKm" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "movingSpeed" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          }
+        },
+        "required" : [ "activeDistanceM", "distanceM" ]
+      },
+      "DrillType" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "color" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "DRILL", "GAME", "WARMUP", "REST" ]
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "color", "id", "kind", "name" ]
+      },
+      "DrillTypeCreate" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "color" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "DRILL", "GAME", "WARMUP", "REST" ]
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "color", "kind", "name" ]
+      },
+      "DrillTypePatch" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : [ "string", "null" ]
+          },
+          "color" : {
+            "type" : [ "string", "null" ]
+          },
+          "kind" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "DRILL", "GAME", "WARMUP", "REST" ]
+          },
+          "name" : {
+            "type" : [ "string", "null" ]
+          }
+        }
+      },
+      "DrillTypeSessionRow" : {
+        "type" : "object",
+        "properties" : {
+          "metrics" : {
+            "$ref" : "#/components/schemas/WindowMetrics"
+          },
+          "segmentCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "sessionId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "startTime" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "surface" : {
+            "type" : "string",
+            "enum" : [ "GRASS", "SAND", "UNKNOWN" ]
+          }
+        },
+        "required" : [ "metrics", "segmentCount", "sessionId", "startTime", "surface" ]
+      },
+      "DrillTypeStatsDto" : {
+        "type" : "object",
+        "properties" : {
+          "drillType" : {
+            "$ref" : "#/components/schemas/DrillType"
+          },
+          "sessions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DrillTypeSessionRow"
+            }
+          },
+          "totals" : {
+            "$ref" : "#/components/schemas/WindowMetrics"
+          }
+        },
+        "required" : [ "drillType", "sessions", "totals" ]
+      },
+      "EffortDto" : {
+        "type" : "object",
+        "properties" : {
+          "endT" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "metrics" : {
+            "$ref" : "#/components/schemas/EffortMetrics"
+          },
+          "peakT" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "segmentId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "startT" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "endT", "id", "metrics", "peakT", "startT" ]
+      },
+      "EffortMetrics" : {
+        "type" : "object",
+        "properties" : {
+          "distanceFirst3s" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "distanceM" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "durationSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "hrMax" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "hrStart" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "maxDecelAfter" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "meanAccel" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "meanSpeed" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "meanSpeedFirst3s" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "peakAccel" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "peakSpeed" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "speedAt1s" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "speedAt2s" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "speedAt3s" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "startSpeed" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "timeTo80PctPeakSec" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "timeToPeakSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "distanceFirst3s", "distanceM", "durationSec", "maxDecelAfter", "meanAccel", "meanSpeed", "peakAccel", "peakSpeed", "startSpeed", "timeTo80PctPeakSec", "timeToPeakSec" ]
+      },
+      "EffortStats" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "meanAccel" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/MeanAndBest"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "meanSpeed" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/MeanAndBest"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "meanSpeedFirst3s" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/MeanAndBest"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "peakAccel" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/MeanAndBest"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "peakSpeed" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/MeanAndBest"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "perActiveMin" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "timeTo80PctPeakSec" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/MeanAndBest"
+            }, {
+              "type" : "null"
+            } ]
+          }
+        },
+        "required" : [ "count" ]
+      },
+      "FatigueMetrics" : {
+        "type" : "object",
+        "properties" : {
+          "peakSpeedDropPct" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          }
+        }
+      },
+      "GeoPoint" : {
+        "type" : "object",
+        "properties" : {
+          "lat" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "lon" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        },
+        "required" : [ "lat", "lon" ]
+      },
+      "GeozoneChangeDto" : {
+        "type" : "object",
+        "properties" : {
+          "affectedSessionCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "geozone" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/GeozoneDto"
+            }, {
+              "type" : "null"
+            } ]
+          }
+        },
+        "required" : [ "affectedSessionCount" ]
+      },
+      "GeozoneCreate" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "shape" : {
+            "$ref" : "#/components/schemas/GeozoneShapeJson"
+          },
+          "surface" : {
+            "type" : "string",
+            "enum" : [ "GRASS", "SAND", "UNKNOWN" ]
+          }
+        },
+        "required" : [ "name", "shape", "surface" ]
+      },
+      "GeozoneDto" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "shape" : {
+            "$ref" : "#/components/schemas/GeozoneShapeJson"
+          },
+          "surface" : {
+            "type" : "string",
+            "enum" : [ "GRASS", "SAND", "UNKNOWN" ]
+          }
+        },
+        "required" : [ "id", "name", "shape", "surface" ]
+      },
+      "GeozonePatch" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : [ "string", "null" ]
+          },
+          "shape" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/GeozoneShapeJson"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "surface" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "GRASS", "SAND", "UNKNOWN" ]
+          }
+        }
+      },
+      "GeozoneShapeJson" : {
+        "type" : "object",
+        "properties" : {
+          "coordinates" : {
+            "type" : [ "array", "null" ],
+            "items" : {
+              "type" : "array",
+              "items" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "number",
+                  "format" : "double"
+                }
+              }
+            }
+          },
+          "lat" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "lon" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "radiusM" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "HeartRateMetrics" : {
+        "type" : "object",
+        "properties" : {
+          "avg" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "max" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "zonesPct" : {
+            "type" : "array",
+            "items" : {
+              "type" : "number",
+              "format" : "double"
+            }
+          }
+        },
+        "required" : [ "zonesPct" ]
+      },
+      "LapDto" : {
+        "type" : "object",
+        "properties" : {
+          "endT" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "index" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "startT" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "trigger" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "endT", "index", "startT" ]
+      },
+      "MeanAndBest" : {
+        "type" : "object",
+        "properties" : {
+          "best" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "mean" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        },
+        "required" : [ "best", "mean" ]
+      },
+      "PageSessionSummary" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SessionSummary"
+            }
+          },
+          "page" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "items", "page", "size", "totalItems", "totalPages" ]
+      },
+      "RecomputeOutdatedResult" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "count" ]
+      },
+      "SegmentCreate" : {
+        "type" : "object",
+        "properties" : {
+          "drillTypeId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "endT" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "label" : {
+            "type" : [ "string", "null" ]
+          },
+          "startT" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "endT", "startT" ]
+      },
+      "SegmentDto" : {
+        "type" : "object",
+        "properties" : {
+          "drillTypeId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "endT" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "label" : {
+            "type" : [ "string", "null" ]
+          },
+          "source" : {
+            "type" : "string",
+            "enum" : [ "LAP", "MANUAL" ]
+          },
+          "startT" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "endT", "id", "source", "startT" ]
+      },
+      "SegmentMerge" : {
+        "type" : "object",
+        "properties" : {
+          "segmentIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        },
+        "required" : [ "segmentIds" ]
+      },
+      "SegmentPatch" : {
+        "type" : "object",
+        "properties" : {
+          "drillTypeId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "endT" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "label" : {
+            "type" : [ "string", "null" ]
+          },
+          "startT" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          }
+        }
+      },
+      "SegmentSplit" : {
+        "type" : "object",
+        "properties" : {
+          "atT" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "atT" ]
+      },
+      "SessionDetail" : {
+        "type" : "object",
+        "properties" : {
+          "analysisVersion" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "device" : {
+            "type" : [ "string", "null" ]
+          },
+          "distanceM" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "elapsedSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "fileName" : {
+            "type" : "string"
+          },
+          "geozoneId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "geozoneName" : {
+            "type" : [ "string", "null" ]
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "laps" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/LapDto"
+            }
+          },
+          "localTzOffsetSec" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "metrics" : {
+            "$ref" : "#/components/schemas/WindowMetrics"
+          },
+          "notes" : {
+            "type" : [ "string", "null" ]
+          },
+          "outdated" : {
+            "type" : "boolean"
+          },
+          "recordingMode" : {
+            "type" : "string",
+            "enum" : [ "EVERY_SECOND", "SMART" ]
+          },
+          "segments" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SegmentDto"
+            }
+          },
+          "sport" : {
+            "type" : [ "string", "null" ]
+          },
+          "startPosition" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/GeoPoint"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "startTime" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "subSport" : {
+            "type" : [ "string", "null" ]
+          },
+          "surface" : {
+            "type" : "string",
+            "enum" : [ "GRASS", "SAND", "UNKNOWN" ]
+          },
+          "surfaceSource" : {
+            "type" : "string",
+            "enum" : [ "GEOZONE", "MANUAL", "NONE" ]
+          },
+          "timerSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "uploadedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "analysisVersion", "elapsedSec", "fileName", "id", "laps", "metrics", "outdated", "recordingMode", "segments", "startTime", "surface", "surfaceSource", "timerSec", "uploadedAt" ]
+      },
+      "SessionPatch" : {
+        "type" : "object",
+        "properties" : {
+          "notes" : {
+            "type" : [ "string", "null" ]
+          },
+          "surface" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "GRASS", "SAND", "UNKNOWN" ]
+          }
+        }
+      },
+      "SessionSeries" : {
+        "type" : "object",
+        "properties" : {
+          "accel" : {
+            "type" : "array",
+            "items" : {
+              "type" : "number",
+              "format" : "float"
+            }
+          },
+          "hr" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "inPause" : {
+            "type" : "array",
+            "items" : {
+              "type" : "boolean"
+            }
+          },
+          "interpolated" : {
+            "type" : "array",
+            "items" : {
+              "type" : "boolean"
+            }
+          },
+          "lat" : {
+            "type" : "array",
+            "items" : {
+              "type" : "number",
+              "format" : "double"
+            }
+          },
+          "lon" : {
+            "type" : "array",
+            "items" : {
+              "type" : "number",
+              "format" : "double"
+            }
+          },
+          "sessionId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "speed" : {
+            "type" : "array",
+            "items" : {
+              "type" : "number",
+              "format" : "float"
+            }
+          },
+          "speedRaw" : {
+            "type" : "array",
+            "items" : {
+              "type" : "number",
+              "format" : "float"
+            }
+          },
+          "startTime" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "t" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        },
+        "required" : [ "accel", "hr", "inPause", "interpolated", "lat", "lon", "sessionId", "speed", "speedRaw", "startTime", "t" ]
+      },
+      "SessionSummary" : {
+        "type" : "object",
+        "properties" : {
+          "activeSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "effortCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "elapsedSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "fileName" : {
+            "type" : "string"
+          },
+          "geozoneId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "geozoneName" : {
+            "type" : [ "string", "null" ]
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "localTzOffsetSec" : {
+            "type" : [ "integer", "null" ],
+            "format" : "int32"
+          },
+          "maxSpeed" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "movingPaceSecPerKm" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "movingSpeed" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          },
+          "outdated" : {
+            "type" : "boolean"
+          },
+          "recordingMode" : {
+            "type" : "string",
+            "enum" : [ "EVERY_SECOND", "SMART" ]
+          },
+          "startTime" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "surface" : {
+            "type" : "string",
+            "enum" : [ "GRASS", "SAND", "UNKNOWN" ]
+          },
+          "surfaceSource" : {
+            "type" : "string",
+            "enum" : [ "GEOZONE", "MANUAL", "NONE" ]
+          }
+        },
+        "required" : [ "activeSec", "effortCount", "elapsedSec", "fileName", "id", "outdated", "recordingMode", "startTime", "surface", "surfaceSource" ]
+      },
+      "SpeedZoneMetrics" : {
+        "type" : "object",
+        "properties" : {
+          "distanceM" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "timeSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "zone" : {
+            "type" : "string",
+            "enum" : [ "STAND", "WALK", "JOG", "RUN", "HIGH_SPEED", "SPRINT" ]
+          }
+        },
+        "required" : [ "distanceM", "timeSec", "zone" ]
+      },
+      "TimeMetrics" : {
+        "type" : "object",
+        "properties" : {
+          "activeSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "elapsedSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "gapSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "pausedSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "workRestRatio" : {
+            "type" : [ "number", "null" ],
+            "format" : "double"
+          }
+        },
+        "required" : [ "activeSec", "elapsedSec", "gapSec", "pausedSec" ]
+      },
+      "TimeRange" : {
+        "type" : "object",
+        "properties" : {
+          "durationSec" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "fromT" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "toT" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "durationSec", "fromT", "toT" ]
+      },
+      "UploadResult" : {
+        "type" : "object",
+        "properties" : {
+          "error" : {
+            "type" : [ "string", "null" ]
+          },
+          "fileName" : {
+            "type" : "string"
+          },
+          "needsSurface" : {
+            "type" : "boolean"
+          },
+          "sessionId" : {
+            "type" : [ "string", "null" ],
+            "format" : "uuid"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "CREATED", "DUPLICATE", "FAILED" ]
+          },
+          "surface" : {
+            "type" : [ "string", "null" ],
+            "enum" : [ "GRASS", "SAND", "UNKNOWN" ]
+          }
+        },
+        "required" : [ "fileName", "needsSurface", "status" ]
+      },
+      "WindowMetrics" : {
+        "type" : "object",
+        "properties" : {
+          "decelCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "distance" : {
+            "$ref" : "#/components/schemas/DistanceMetrics"
+          },
+          "efforts" : {
+            "$ref" : "#/components/schemas/EffortStats"
+          },
+          "fatigue" : {
+            "$ref" : "#/components/schemas/FatigueMetrics"
+          },
+          "heartRate" : {
+            "$ref" : "#/components/schemas/HeartRateMetrics"
+          },
+          "range" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/TimeRange"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "time" : {
+            "$ref" : "#/components/schemas/TimeMetrics"
+          },
+          "zones" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SpeedZoneMetrics"
+            }
+          }
+        },
+        "required" : [ "decelCount", "distance", "efforts", "fatigue", "heartRate", "time", "zones" ]
+      }
+    }
+  }
+}

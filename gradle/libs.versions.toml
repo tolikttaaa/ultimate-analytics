@@ -6,6 +6,7 @@ kotest = "6.2.5"
 kotlinx-coroutines = "1.11.0"
 garmin-fit = "21.217.0"
 springdoc = "3.1.1"
+node-gradle = "7.1.0"
 
 [libraries]
 # Gradle plugins, put on the build classpath by buildSrc
@@ -40,3 +41,6 @@ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+
+[plugins]
+node = { id = "com.github.node-gradle.node", version.ref = "node-gradle" }
