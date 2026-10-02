@@ -58,4 +58,8 @@ class MetricsSnapshotRepository(private val jdbc: JdbcClient, private val json: 
             .param("sessionId", sessionId)
             .query(Int::class.java)
             .single()
+
+    fun deleteBySession(sessionId: UUID) {
+        jdbc.sql("delete from metrics_snapshot where session_id = :sessionId").param("sessionId", sessionId).update()
+    }
 }

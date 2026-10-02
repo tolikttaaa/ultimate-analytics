@@ -27,4 +27,8 @@ class LapRepository(private val jdbc: JdbcClient) {
             .param("sessionId", sessionId)
             .query { rs, _ -> Lap(rs.getInt("idx"), TimeRange(rs.getInt("start_t"), rs.getInt("end_t")), rs.getString("trigger")) }
             .list()
+
+    fun deleteBySession(sessionId: UUID) {
+        jdbc.sql("delete from lap where session_id = :sessionId").param("sessionId", sessionId).update()
+    }
 }

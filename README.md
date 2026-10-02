@@ -28,6 +28,10 @@ On the first run `dev-up.sh` creates `infra/docker/.env` from `infra/docker/.env
 The app and Postgres are bound to `127.0.0.1` only; if port 8080 or 5432 is taken, change `APP_PORT` /
 `POSTGRES_PORT` in `infra/docker/.env`. Health: `http://localhost:8080/actuator/health`.
 
+The REST API lives under `/api` (spec 9). Its OpenAPI description is at `http://localhost:8080/v3/api-docs`, browsable
+with Swagger UI at `http://localhost:8080/swagger-ui.html`. Upload FIT files or Garmin Connect `.zip` exports with
+`curl -F files=@training.fit http://localhost:8080/api/sessions/upload`.
+
 ### Backend from the IDE
 
 ```sh

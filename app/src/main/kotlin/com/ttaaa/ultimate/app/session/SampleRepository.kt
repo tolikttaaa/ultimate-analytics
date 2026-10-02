@@ -75,6 +75,10 @@ class SampleRepository(private val jdbcTemplate: JdbcTemplate, private val jdbc:
             .query(Int::class.java)
             .single()
 
+    fun deleteBySession(sessionId: UUID) {
+        jdbc.sql("delete from sample where session_id = :sessionId").param("sessionId", sessionId).update()
+    }
+
     private fun PreparedStatement.setNullableDouble(index: Int, value: Double?) =
         if (value == null) setNull(index, Types.DOUBLE) else setDouble(index, value)
 

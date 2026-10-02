@@ -328,4 +328,8 @@ Newest entries at the bottom.
     holes), closed or not. Creating, editing and deleting a geozone all re-run the matching for every non-MANUAL
     session and return the number of sessions whose geozone or surface changed; a deleted geozone first leaves its
     sessions through the foreign key, then they are matched again.
+  - Recompute (spec 8.2) replaces samples, laps, efforts and snapshots in one transaction and keeps segments (same
+    ids), notes and a MANUAL surface; other surfaces are matched again because the reference point may change with the
+    algorithm. `recompute-outdated` skips (and logs) sessions that fail, e.g. without a raw file, and returns how many
+    were recomputed. A missing raw file is a 404.
 - **Alternatives:** JSON Merge Patch documents; recomputing segment snapshots immediately.

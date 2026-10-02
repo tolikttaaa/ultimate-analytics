@@ -59,4 +59,8 @@ class EffortRepository(private val jdbc: JdbcClient, private val json: JsonMappe
                 )
             }
             .list()
+
+    fun deleteBySession(sessionId: UUID) {
+        jdbc.sql("delete from effort where session_id = :sessionId").param("sessionId", sessionId).update()
+    }
 }

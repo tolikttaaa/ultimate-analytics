@@ -1,18 +1,13 @@
 package com.ttaaa.ultimate.app.web
 
-import com.ttaaa.ultimate.analysis.ANALYSIS_VERSION
 import com.ttaaa.ultimate.app.geozone.GeozoneRepository
 import com.ttaaa.ultimate.app.ingestion.UploadResult
 import com.ttaaa.ultimate.app.ingestion.UploadService
 import com.ttaaa.ultimate.app.ingestion.UploadedFile
-import com.ttaaa.ultimate.app.metrics.MetricsService
-import com.ttaaa.ultimate.app.segment.SegmentRepository
-import com.ttaaa.ultimate.app.session.LapRepository
 import com.ttaaa.ultimate.app.session.SessionFilter
 import com.ttaaa.ultimate.app.session.SessionService
 import com.ttaaa.ultimate.domain.GeoPoint
 import com.ttaaa.ultimate.domain.RecordingMode
-import com.ttaaa.ultimate.domain.Session
 import com.ttaaa.ultimate.domain.Surface
 import com.ttaaa.ultimate.domain.SurfaceSource
 import com.ttaaa.ultimate.domain.WindowMetrics
@@ -102,10 +97,8 @@ data class SessionPatch(val surface: Surface? = null, val notes: Optional<String
 class SessionController(
     private val sessionService: SessionService,
     private val uploads: UploadService,
-    private val metrics: MetricsService,
     private val geozones: GeozoneRepository,
-    private val laps: LapRepository,
-    private val segments: SegmentRepository,
+    private val views: SessionViews,
 ) {
 
     @PostMapping("/upload", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
@@ -125,7 +118,7 @@ class SessionController(
         val (sessions, total) = sessionService.list(SessionFilter(from, to, surface), page, size)
         val geozoneNames = geozones.findAll().associate { it.id to it.name }
         return Page(
-            items = sessions.map { summary(it, geozoneNames[it.geozoneId]) },
+            items = sessions.map { views.summary(it, geozoneNames[it.geozoneId]) },
             page = page,
             size = size,
             totalItems = total,
@@ -134,12 +127,12 @@ class SessionController(
     }
 
     @GetMapping("/{id}")
-    fun detail(@PathVariable id: UUID): SessionDetail = detail(sessionService.get(id))
+    fun detail(@PathVariable id: UUID): SessionDetail = views.detail(sessionService.get(id))
 
     @PatchMapping("/{id}")
     @Operation(summary = "Set the surface (becomes MANUAL) and/or the notes")
     fun update(@PathVariable id: UUID, @RequestBody patch: SessionPatch): SessionDetail =
-        detail(sessionService.update(id, patch.surface, patch.notes))
+        views.detail(sessionService.update(id, patch.surface, patch.notes))
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -155,52 +148,4 @@ class SessionController(
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .body(content)
     }
-
-    private fun summary(session: Session, geozoneName: String?): SessionSummary {
-        val metrics = metrics.sessionMetrics(session).metrics
-        return SessionSummary(
-            id = session.id,
-            startTime = session.startTime,
-            localTzOffsetSec = session.localTzOffsetSec,
-            fileName = session.fileName,
-            geozoneId = session.geozoneId,
-            geozoneName = geozoneName,
-            surface = session.surface,
-            surfaceSource = session.surfaceSource,
-            recordingMode = session.recordingMode,
-            elapsedSec = session.elapsedSec,
-            activeSec = metrics.time.activeSec,
-            effortCount = metrics.efforts.count,
-            maxSpeed = metrics.distance.maxSpeed,
-            movingSpeed = metrics.distance.movingSpeed,
-            movingPaceSecPerKm = metrics.distance.movingPaceSecPerKm,
-            outdated = session.analysisVersion < ANALYSIS_VERSION,
-        )
-    }
-
-    private fun detail(session: Session) = SessionDetail(
-        id = session.id,
-        fileName = session.fileName,
-        uploadedAt = session.uploadedAt,
-        startTime = session.startTime,
-        localTzOffsetSec = session.localTzOffsetSec,
-        elapsedSec = session.elapsedSec,
-        timerSec = session.timerSec,
-        distanceM = session.distanceM,
-        device = session.device,
-        sport = session.sport,
-        subSport = session.subSport,
-        startPosition = session.startPosition,
-        geozoneId = session.geozoneId,
-        geozoneName = session.geozoneId?.let { geozones.findById(it)?.name },
-        surface = session.surface,
-        surfaceSource = session.surfaceSource,
-        notes = session.notes,
-        recordingMode = session.recordingMode,
-        analysisVersion = session.analysisVersion,
-        outdated = session.analysisVersion < ANALYSIS_VERSION,
-        laps = laps.findBySession(session.id).map(::LapDto),
-        segments = segments.findBySession(session.id).map(::SegmentDto),
-        metrics = metrics.sessionMetrics(session).metrics,
-    )
 }

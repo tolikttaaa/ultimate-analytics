@@ -27,7 +27,10 @@ import java.time.Clock
 import java.util.UUID
 import kotlin.math.roundToInt
 
-/** Writes an analysed session and everything derived from it in one transaction (spec 7.4 step 5). */
+/**
+ * Writes an analysed session and everything derived from it in one transaction: on upload (spec 7.4 step 5) and on
+ * recompute (spec 8.2).
+ */
 @Component
 class SessionImporter(
     private val sessions: SessionRepository,
@@ -76,6 +79,44 @@ class SessionImporter(
             analysis.efforts.map { StoredEffort(UUID.randomUUID(), session.id, segmentOf(it, lapSegments)?.id, it) },
         )
         metricsSnapshots(session.id, session.analysisVersion, analysis.lastT, storedSamples, analysis.efforts, lapSegments, params)
+            .forEach(snapshots::save)
+        return session
+    }
+
+    /**
+     * Replaces the derived data of an existing session with a new analysis of its raw file (spec 8.2): samples, laps,
+     * efforts and cached metrics. Segments, notes and a MANUAL surface stay; any other surface is matched again, and
+     * the efforts are attributed to the existing segments.
+     */
+    @Transactional
+    fun replaceAnalysis(current: Session, raw: RawSession, analysis: AnalysisResult): Session {
+        check(sessions.lock(current.id)) { "Session ${current.id} was deleted" }
+        val recomputed = current.copy(
+            startTime = analysis.startTime,
+            localTzOffsetSec = raw.localTzOffsetSec,
+            elapsedSec = analysis.lastT,
+            timerSec = raw.totalTimerSec.roundToInt(),
+            distanceM = raw.totalDistanceM,
+            device = raw.device,
+            sport = raw.sport,
+            subSport = raw.subSport,
+            startPosition = analysis.referencePosition,
+            analysisVersion = ANALYSIS_VERSION,
+            recordingMode = analysis.recordingMode,
+        )
+        val session = applyGeozoneMatch(recomputed, matchGeozone(analysis.referencePosition, geozones.findAll()))
+        val storedSamples = analysis.samples.map { it.asStored() }
+        val existingSegments = segments.findBySession(session.id)
+
+        listOf(samples::deleteBySession, laps::deleteBySession, efforts::deleteBySession, snapshots::deleteBySession)
+            .forEach { it(session.id) }
+        sessions.update(session)
+        samples.insertAll(session.id, storedSamples)
+        laps.insertAll(session.id, analysis.laps)
+        efforts.insertAll(
+            analysis.efforts.map { StoredEffort(UUID.randomUUID(), session.id, segmentOf(it, existingSegments)?.id, it) },
+        )
+        metricsSnapshots(session.id, session.analysisVersion, analysis.lastT, storedSamples, analysis.efforts, existingSegments, params)
             .forEach(snapshots::save)
         return session
     }
