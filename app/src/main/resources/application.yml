@@ -1,0 +1,22 @@
+# Defaults only (spec 7.5): no hostnames, credentials or other environment-specific values.
+# Environments add infra/config/application-<profile>.yml and environment variables.
+spring:
+  application:
+    name: ultimate-analytics
+  profiles:
+    active: local
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+server:
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true

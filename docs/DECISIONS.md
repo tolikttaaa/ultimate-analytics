@@ -52,3 +52,13 @@ Newest entries at the bottom.
 - **Decision:** Testcontainers PostgreSQL is introduced in step 2. `./gradlew build` needs a running Docker from then on.
   Approved by the user.
 - **Alternatives:** an in-memory database (diverges from Postgres), or no startup test until step 11.
+
+## 2026-10-02 — Build setup taken over from the IntelliJ template
+
+- **Context:** the repository started from an IntelliJ Kotlin multi-module template (`app`, `utils`, JVM toolchain 26,
+  kotlinx libraries, Gradle 9.6.0).
+- **Decision:** kept the `buildSrc` convention plugin, the version catalog, foojay and the build/configuration caches;
+  removed `utils`, the `application` plugin and the kotlinx bundle (the domain uses `java.time` and `java.util.UUID`
+  as in spec 5); set the toolchain to 21 (spec 7.1); updated the wrapper to the current Gradle 9.8.0. Plugins are put
+  on the build classpath by `buildSrc` and applied by id without versions. Approved by the user.
+- **Alternatives:** start the Gradle setup from scratch.
