@@ -160,7 +160,7 @@ export function GeozonesPage() {
                 }}
               >
                 <span className="geozone-name">{geozone.name}</span>
-                <SurfaceChip surface={geozone.surface} source="GEOZONE" />
+                <SurfaceChip surface={geozone.surface} />
                 <span className="muted">{describeShape(geozone.shape)}</span>
                 <span className="geozone-actions">
                   <button className="button small" disabled={editing !== null} onClick={(e) => { e.stopPropagation(); startEdit(geozone) }}>

@@ -1,7 +1,8 @@
 import type { RouteObject } from 'react-router'
 import { AppLayout } from './layout/AppLayout'
 import { GeozonesPage } from './pages/geozones/GeozonesPage'
-import { DrillTypePage, DrillTypesPage, NotFoundPage } from './pages/Placeholders'
+import { DrillTypesPage } from './pages/drilltypes/DrillTypesPage'
+import { NotFoundPage } from './pages/Placeholders'
 import { SessionsPage } from './pages/sessions/SessionsPage'
 
 /** The five screens of spec 10.1; the upload dialog opens over the sessions list. */
@@ -15,7 +16,7 @@ export const routes: RouteObject[] = [
       // Loaded on demand: the charts (ECharts) are most of the bundle.
       { path: 'sessions/:id', lazy: { Component: async () => (await import('./pages/session/SessionPage')).SessionPage } },
       { path: 'drill-types', element: <DrillTypesPage /> },
-      { path: 'drill-types/:id', element: <DrillTypePage /> },
+      { path: 'drill-types/:id', lazy: { Component: async () => (await import('./pages/drilltypes/DrillTypePage')).DrillTypePage } },
       { path: 'geozones', element: <GeozonesPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],

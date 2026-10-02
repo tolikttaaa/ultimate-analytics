@@ -492,3 +492,22 @@ Newest entries at the bottom.
     polygon geozones were not outlined there; both screens now share one constant for the shape types.
 - **Alternatives:** dragging corners and the centre; a radius set by dragging; MapLibre drawing plugins (another
   dependency, no MapLibre 6 support yet checked).
+
+## 2026-10-02 — Drill types screens (step 20)
+
+- **Context:** spec 10.1 screen 5 asks for a list with colour and kind, CRUD, and a detail page with aggregated stats
+  and a per-session trend, filtered by surface and date range.
+- **Decision:**
+  - The list edits in place: name, code, kind and colour. The code follows the name (`Cutting 1v1` → `CUTTING_1V1`)
+    until it is typed; colours come from an eight-colour palette or a colour picker, a new type gets the first
+    unused palette colour. A taken code shows the server's 409 message; deleting asks for a confirmation (its
+    segments stay, untyped).
+  - The detail page shows the totals of all matching segments in the session screen's metrics panel, key numbers
+    (sessions, segments, time, efforts, best peak speed), a trend chart and one row per session. Filters live in
+    the URL like on the sessions list.
+  - **Trend:** one point per session on a time axis, coloured by surface, joined in the drill type's colour; the
+    metric is chosen from seven values of the session rows (best and mean peak speed, mean first 3 s speed, efforts
+    per active minute, moving speed, active time, average heart rate), read from the API's metrics and only
+    converted to display units.
+  - The detail page is loaded on demand (it shares the ECharts chunk with the session screen).
+- **Alternatives:** a dialog for create / edit; several metrics in one trend chart; a free colour field only.

@@ -59,6 +59,12 @@ describe('routes', () => {
     expect(await screen.findByRole('heading', { name: 'Geozones' })).toBeInTheDocument()
   })
 
+  it('shows the drill types', async () => {
+    stubApi()
+    renderAt('/drill-types')
+    expect(await screen.findByRole('heading', { name: 'Drill types' })).toBeInTheDocument()
+  })
+
   it('shows not found for unknown paths', async () => {
     stubApi()
     renderAt('/nothing-here')

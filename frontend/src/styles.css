@@ -734,3 +734,108 @@ input {
   gap: 6px;
   margin-left: auto;
 }
+
+.swatch.large {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  vertical-align: -2px;
+}
+
+.drill-types-table .code {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.drill-type-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 14px;
+  margin: 12px 0 20px;
+  padding: 14px;
+  border: 1px solid var(--color-accent);
+  border-radius: 8px;
+}
+
+.drill-type-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.color-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.color-field legend {
+  margin-bottom: 4px;
+  padding: 0;
+}
+
+.swatch-button {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--color-border);
+  cursor: pointer;
+}
+
+.swatch-button.chosen {
+  box-shadow: 0 0 0 2px var(--color-text);
+}
+
+.color-field input[type='color'] {
+  width: 32px;
+  height: 26px;
+  padding: 0 2px;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.drill-type-form .error {
+  width: 100%;
+  margin: 0;
+}
+
+.breadcrumb {
+  margin: 0 0 4px;
+  font-size: 13px;
+}
+
+.drill-type-page .page-header {
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.drill-type-body {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(360px, 1fr);
+  gap: 24px;
+}
+
+.trend {
+  margin: 20px 0;
+}

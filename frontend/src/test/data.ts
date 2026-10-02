@@ -146,7 +146,7 @@ export function segment(overrides: Partial<Segment> = {}): Segment {
 }
 
 export function drillType(overrides: Partial<DrillType> = {}): DrillType {
-  return { id: 'd1', code: 'sprints', name: 'Sprints', kind: 'DRILL', color: '#e65100', ...overrides }
+  return { id: 'd1', code: 'SPRINTS', name: 'Sprints', kind: 'DRILL', color: '#e65100', ...overrides }
 }
 
 export function geozone(overrides: Partial<Geozone> = {}): Geozone {
@@ -161,4 +161,18 @@ export function geozone(overrides: Partial<Geozone> = {}): Geozone {
 
 export function uiConfig(): components['schemas']['UiConfig'] {
   return { map: { vectorStyleUrl: 'https://tiles.openfreemap.org/styles/liberty', satellite: null } }
+}
+
+export function drillTypeStats(sessions: { id: string; startTime: string; surface: 'GRASS' | 'SAND'; peakBest: number | null }[]) {
+  const rows = sessions.map(({ id, startTime, surface, peakBest }) => ({
+    sessionId: id,
+    startTime,
+    surface,
+    segmentCount: 2,
+    metrics: windowMetrics({
+      time: { ...windowMetrics().time, elapsedSec: 1200 },
+      efforts: { ...windowMetrics().efforts, count: 5, peakSpeed: peakBest == null ? null : { mean: peakBest - 1, best: peakBest } },
+    }),
+  }))
+  return { drillType: drillType(), totals: windowMetrics(), sessions: rows }
 }

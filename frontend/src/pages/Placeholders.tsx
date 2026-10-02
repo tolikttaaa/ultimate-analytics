@@ -1,15 +1,4 @@
-import { useParams } from 'react-router'
-
-/* Screens of spec 10.1 that later steps fill in. */
-
-export function DrillTypesPage() {
-  return <h1>Drill types</h1>
-}
-
-export function DrillTypePage() {
-  const { id } = useParams()
-  return <h1>Drill type {id}</h1>
-}
+/* The page for unknown paths. */
 
 export function NotFoundPage() {
   return <h1>Page not found</h1>
