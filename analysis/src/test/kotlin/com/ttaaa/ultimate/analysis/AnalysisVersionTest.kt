@@ -23,6 +23,7 @@ class AnalysisVersionTest {
             minPauseDurationSec = 20,
             pauseSpikeToleranceSec = 2,
             effortStartAccel = 1.0,
+            effortStartLookbackSec = 2,
             effortMinPeakSpeed = 4.5,
             effortMinSpeedGain = 2.0,
             effortEndPeakRatio = 0.7,

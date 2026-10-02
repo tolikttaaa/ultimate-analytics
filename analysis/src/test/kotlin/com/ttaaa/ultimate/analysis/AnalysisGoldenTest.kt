@@ -1,5 +1,6 @@
 package com.ttaaa.ultimate.analysis
 
+import com.ttaaa.ultimate.analysis.effort.detectEfforts
 import com.ttaaa.ultimate.analysis.grid.Grid
 import com.ttaaa.ultimate.analysis.grid.buildGrid
 import com.ttaaa.ultimate.analysis.metrics.movingSpeed
@@ -8,6 +9,7 @@ import com.ttaaa.ultimate.analysis.pause.detectPauses
 import com.ttaaa.ultimate.analysis.pause.markPauses
 import com.ttaaa.ultimate.analysis.smoothing.smooth
 import com.ttaaa.ultimate.domain.AnalysisParameters
+import com.ttaaa.ultimate.domain.Effort
 import com.ttaaa.ultimate.domain.RawSession
 import com.ttaaa.ultimate.domain.Sample
 import com.ttaaa.ultimate.domain.TimeRange
@@ -34,11 +36,18 @@ class AnalysisGoldenTest {
         val smoothed = smooth(grid, params)
         val pauses = detectPauses(smoothed, params)
         val samples = markPauses(smoothed, pauses)
+        val efforts = detectEfforts(samples, params)
 
-        Golden.verify("$fileName.analysis.txt", summary(raw, grid, samples, pauses))
+        Golden.verify("$fileName.analysis.txt", summary(raw, grid, samples, pauses, efforts))
     }
 
-    private fun summary(raw: RawSession, grid: Grid, samples: List<Sample>, pauses: List<TimeRange>) = buildString {
+    private fun summary(
+        raw: RawSession,
+        grid: Grid,
+        samples: List<Sample>,
+        pauses: List<TimeRange>,
+        efforts: List<Effort>,
+    ) = buildString {
         val points = grid.points
         val present = points.mapTo(HashSet()) { it.t }
         val gaps = (0..grid.lastT).filterNot { it in present }.fold(mutableListOf<IntRange>()) { ranges, t ->
@@ -60,6 +69,17 @@ class AnalysisGoldenTest {
         appendLine("time: elapsed ${time.elapsedSec} s, active ${time.activeSec} s, paused ${time.pausedSec} s, gap ${time.gapSec} s")
         appendLine("moving speed: ${movingSpeed(samples, session, params)?.format()} m/s")
         appendLine("samples sha256: ${Golden.sha256(samples.joinToString("\n"))}")
+        val metrics = efforts.map { it.metrics }
+        appendLine(
+            "efforts: ${efforts.size}, peak speed mean ${metrics.map { it.peakSpeed }.average().format()} " +
+                "max ${metrics.maxOfOrNull { it.peakSpeed }?.format()} m/s, " +
+                "duration mean ${metrics.map { it.durationSec }.average().format()} s",
+        )
+        appendLine(
+            "first 3 s: mean speed ${metrics.mapNotNull { it.meanSpeedFirst3s }.average().format()} m/s, " +
+                "time to 80 % of peak ${metrics.map { it.timeTo80PctPeakSec }.average().format()} s",
+        )
+        appendLine("efforts sha256: ${Golden.sha256(efforts.joinToString("\n"))}")
     }
 
     private fun Double.format() = String.format(Locale.ROOT, "%.3f", this)

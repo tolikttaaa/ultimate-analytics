@@ -35,6 +35,8 @@ data class AnalysisParameters(
     val pauseSpikeToleranceSec: Int = 2,
     /** An effort is triggered when acceleration reaches this, m/s² (spec 6.4). */
     val effortStartAccel: Double = 1.0,
+    /** The effort starts at the lowest speed among the trigger sample and this many samples before it (spec 6.4). */
+    val effortStartLookbackSec: Int = 2,
     /** Minimum peak speed of an effort, m/s (spec 6.4). */
     val effortMinPeakSpeed: Double = 4.5,
     /** Minimum gain from start to peak speed, m/s (spec 6.4). */
@@ -68,6 +70,7 @@ data class AnalysisParameters(
         require(minPauseDurationSec > 0) { "minPauseDurationSec must be positive" }
         require(pauseSpikeToleranceSec >= 0) { "pauseSpikeToleranceSec must not be negative" }
         require(effortStartAccel > 0.0) { "effortStartAccel must be positive" }
+        require(effortStartLookbackSec >= 0) { "effortStartLookbackSec must not be negative" }
         require(effortMinPeakSpeed > 0.0) { "effortMinPeakSpeed must be positive" }
         require(effortMinSpeedGain > 0.0) { "effortMinSpeedGain must be positive" }
         require(effortEndPeakRatio > 0.0 && effortEndPeakRatio < 1.0) { "effortEndPeakRatio must be in (0, 1)" }

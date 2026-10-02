@@ -11,3 +11,6 @@ pauses: 77, longest 306 s
 time: elapsed 6761 s, active 2006 s, paused 4755 s, gap 0 s
 moving speed: 3.023 m/s
 samples sha256: 27c81e66e99fe7e4d869fa0134b8c11f838d39f7dc9e233b608bd3c6b4137e2f
+efforts: 10, peak speed mean 5.470 max 7.859 m/s, duration mean 7.200 s
+first 3 s: mean speed 2.608 m/s, time to 80 % of peak 3.209 s
+efforts sha256: 75180b6cbaf0dafa1bce4f02f389605decdf6185835ee1812c6ddc98643e0baa

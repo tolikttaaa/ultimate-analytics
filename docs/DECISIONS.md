@@ -197,3 +197,25 @@ Newest entries at the bottom.
   - Moving speed follows spec 6.3 literally, also for Smart-recorded sessions, where it then averages the recorded
     seconds only (about a third of the samples).
 - **Alternatives:** detect pauses on the raw speed; let a pause bridge short gaps.
+
+## 2026-10-02 — Effort detection details (step 8)
+
+- **Context:** spec 6.4 defines effort detection, but the peak and the end are defined in terms of each other, the
+  start look-back is a fixed number, and it does not say where to search after a rejected candidate.
+- **Decision:**
+  - The trigger is a rising edge: `accel ≥ effortStartAccel` right after a sample below it, in the same run.
+  - The start is the lowest speed among the trigger and the `effortStartLookbackSec` (new parameter, default 2) samples
+    before it; on ties the latest sample, just before the speed rises. It never lies before the end of the previous
+    effort, so efforts never overlap (they may touch).
+  - Peak and end use a running peak: walking forward from the start, the peak is the highest speed so far (the first
+    one on ties), and the effort ends at the first sample below `max(peak × effortEndPeakRatio, effortEndMinSpeed)` of
+    that peak, at the latest `effortMaxDurationSec` after the start (the peak may then be the last sample).
+  - An effort that reaches a gap or the end of the data before it ends is rejected (spec: no gap inside).
+  - After an accepted effort the next trigger is searched from its end + 1 (spec); after a rejected candidate from the
+    sample after its trigger, so a real sprint right behind a false start is not skipped.
+  - Per-effort metrics follow the intervals of spec 6.4 literally (for example `meanSpeed` over `[startT, endT]`,
+    `distanceM` over `[startT, endT)`). Values after the end of an effort (`meanSpeedFirst3s`, `maxDecelAfter`, `hrMax`)
+    use the samples of the same run only; `meanSpeedFirst3s` is null when the run ends before `startT + 3`.
+  - The 80 %, 3 s, +3 s and +10 s of the metric definitions are named constants, not parameters: they define what a
+    metric means, while parameters are detection thresholds.
+- **Alternatives:** search after the end of rejected candidates too; let the look-back reach into the previous effort.

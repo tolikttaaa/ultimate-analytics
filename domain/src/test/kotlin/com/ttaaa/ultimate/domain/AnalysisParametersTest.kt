@@ -29,6 +29,7 @@ class AnalysisParametersTest {
             "zero pause duration" to { defaults.copy(minPauseDurationSec = 0) },
             "negative spike tolerance" to { defaults.copy(pauseSpikeToleranceSec = -1) },
             "zero start acceleration" to { defaults.copy(effortStartAccel = 0.0) },
+            "negative start look-back" to { defaults.copy(effortStartLookbackSec = -1) },
             "end peak ratio of 1" to { defaults.copy(effortEndPeakRatio = 1.0) },
             "min duration above max" to { defaults.copy(effortMinDurationSec = 16) },
             "zero min duration" to { defaults.copy(effortMinDurationSec = 0) },
