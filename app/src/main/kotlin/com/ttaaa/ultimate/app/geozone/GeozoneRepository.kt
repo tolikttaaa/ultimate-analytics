@@ -35,7 +35,7 @@ class GeozoneRepository(private val jdbc: JdbcClient, private val json: JsonMapp
             }
             .list()
 
-    fun findById(id: UUID): Geozone? = findAll().find { it.id == id }
+    fun findById(id: UUID): Geozone? = findAll().find { it.id == id } // a handful of geozones
 }
 
 /**

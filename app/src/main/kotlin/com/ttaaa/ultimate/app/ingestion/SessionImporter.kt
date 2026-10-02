@@ -75,7 +75,7 @@ class SessionImporter(
         efforts.insertAll(
             analysis.efforts.map { StoredEffort(UUID.randomUUID(), session.id, segmentOf(it, lapSegments)?.id, it) },
         )
-        metricsSnapshots(session.id, analysis.lastT, storedSamples, analysis.efforts, lapSegments, params)
+        metricsSnapshots(session.id, session.analysisVersion, analysis.lastT, storedSamples, analysis.efforts, lapSegments, params)
             .forEach(snapshots::save)
         return session
     }
