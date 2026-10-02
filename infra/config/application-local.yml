@@ -1,0 +1,14 @@
+# `local` profile (POC): the compose stack, or ./gradlew :app:bootRun against `dev-up.sh --db-only`.
+# Loaded through SPRING_CONFIG_ADDITIONAL_LOCATION (spec 7.5). Credentials are never stored here;
+# they come from environment variables defined in infra/docker/.env.
+
+server:
+  # Bound to localhost (spec 11). Inside the container the app listens on all interfaces
+  # (SERVER_ADDRESS) and compose publishes the port on 127.0.0.1 only.
+  address: 127.0.0.1
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}

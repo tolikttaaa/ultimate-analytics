@@ -25,7 +25,8 @@ drill type and any selected time window.
 ```
 
 On the first run `dev-up.sh` creates `infra/docker/.env` from `infra/docker/.env.example`.
-The app and Postgres are bound to `127.0.0.1` only.
+The app and Postgres are bound to `127.0.0.1` only; if port 8080 or 5432 is taken, change `APP_PORT` /
+`POSTGRES_PORT` in `infra/docker/.env`. Health: `http://localhost:8080/actuator/health`.
 
 ### Backend from the IDE
 

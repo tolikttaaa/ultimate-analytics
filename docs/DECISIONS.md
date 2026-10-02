@@ -62,3 +62,19 @@ Newest entries at the bottom.
   as in spec 5); set the toolchain to 21 (spec 7.1); updated the wrapper to the current Gradle 9.8.0. Plugins are put
   on the build classpath by `buildSrc` and applied by id without versions. Approved by the user.
 - **Alternatives:** start the Gradle setup from scratch.
+
+## 2026-10-02 — Local stack details
+
+- **Context:** spec 7.5 and 11 describe the local compose stack but leave image versions, ports and script behaviour open.
+- **Decision:**
+  - Postgres image `postgres:17-alpine`, the same tag in compose and in the Testcontainers tests.
+  - Postgres and the app are published on `127.0.0.1` only; host ports come from `POSTGRES_PORT` / `APP_PORT` in `.env`.
+  - `dev-up.sh` creates `.env` from `.env.example` when it is missing, so a clean checkout starts (M2 criterion), and
+    has a `--db-only` mode for running the app from the IDE. `dev-down.sh --volumes` deletes the data.
+  - Credentials exist only as `POSTGRES_*` variables in `.env`; `application-local.yml` maps them to
+    `spring.datasource.*`. `./gradlew :app:bootRun` reads the same `.env` and config directory as compose.
+  - The image runs as a non-root user with the layered Spring Boot jar; the Docker ignore file sits next to the
+    Dockerfile (`Dockerfile.dockerignore`) so everything about running the app stays under `infra/`.
+  - V1 adds to the spec 8.1 sketch only check constraints (`session.surface`, `session.surface_source`, ordering of
+    segment and effort times) and indexes on `session.start_time` and the foreign keys.
+- **Alternatives:** Postgres 18; ports on all interfaces; failing when `.env` is missing.

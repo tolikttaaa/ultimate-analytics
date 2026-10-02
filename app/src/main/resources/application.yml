@@ -7,6 +7,10 @@ spring:
     active: local
   lifecycle:
     timeout-per-shutdown-phase: 30s
+  flyway:
+    # Migrations come from the infra:db-migrations jar (classpath:db/migration).
+    # Disabled where a separate migration job runs them (future server profile).
+    enabled: true
 
 server:
   shutdown: graceful

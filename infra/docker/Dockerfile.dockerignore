@@ -1,0 +1,14 @@
+# Build context is the repository root; keep it to what the Gradle build needs.
+.git
+.gradle
+.kotlin
+.idea
+.claude
+**/build
+**/node_modules
+frontend/dist
+storage
+notebooks
+docs
+infra/docker/.env
+**/.DS_Store
