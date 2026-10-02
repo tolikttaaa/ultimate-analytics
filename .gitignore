@@ -1,0 +1,53 @@
+### Gradle ###
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### Kotlin ###
+.kotlin/
+
+### IntelliJ IDEA ###
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### VS Code ###
+.vscode/
+
+### Frontend ###
+node_modules/
+frontend/dist/
+test-results/
+playwright-report/
+
+### Kotlin Notebook ###
+.ipynb_checkpoints/
+
+### Local data and secrets ###
+storage/
+.env
+values-server.yaml
+
+### Claude Code (personal settings) ###
+.claude/settings.local.json
+
+### macOS ###
+.DS_Store

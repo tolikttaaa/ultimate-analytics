@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Bash(git init)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(./gradlew *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(docker compose *)",
+      "Bash(./infra/scripts/*)",
+      "Bash(helm *)"
+    ],
+    "deny": ["Bash(git push *)"]
+  }
+}

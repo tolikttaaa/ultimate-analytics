@@ -1,0 +1,54 @@
+# Decisions
+
+Choices made during implementation where `docs/SPEC.md` was ambiguous, contradictory or silent.
+Newest entries at the bottom.
+
+## 2026-10-02 — Spec file name
+
+- **Context:** `.claude/CLAUDE.md` refers to `docs/SPEC.md`; the spec was saved as `docs/POC_specification.md`.
+- **Decision:** renamed the file to `docs/SPEC.md`; content unchanged. Approved by the user.
+- **Alternatives:** keep the old name and update CLAUDE.md.
+
+## 2026-10-02 — Base package
+
+- **Context:** CLAUDE.md asks for a base package (suggesting `com.<name>.ultimate`).
+- **Decision:** `com.ttaaa.ultimate`, with sub-packages `domain`, `fit`, `analysis`, `app` (spec 7.3). Chosen by the user.
+- **Alternatives:** `org.ttaaa.ultimate` (namespace of the IntelliJ project template).
+
+## 2026-10-02 — No `owner_id` in V1
+
+- **Context:** spec 14 asks whether to add `owner_id` to `session`, `geozone`, `drill_type` in V1.
+- **Decision:** not added. The POC is single-user; a nullable column can be added later in an additive migration.
+  Approved by the user.
+- **Alternatives:** add `owner_id` now.
+
+## 2026-10-02 — No `Session.status`
+
+- **Context:** spec 5 lists `status` on `Session`, but the schema in 8.1 has no column and no states are defined.
+  Uploads are synchronous, a failed file stores nothing (spec 11), and "outdated" is derived from
+  `analysis_version` (spec 8.2).
+- **Decision:** `status` is left out of the domain model and the schema. Approved by the user.
+- **Alternatives:** a status enum such as `READY` / `OUTDATED`.
+
+## 2026-10-02 — IntelliJ project files are not committed
+
+- **Context:** the IntelliJ template staged `.idea/` files, including a machine-specific JDK name.
+- **Decision:** `.idea/` is ignored entirely; the Gradle build is the single source of project configuration.
+  Approved by the user.
+- **Alternatives:** commit shared files such as code style settings.
+
+## 2026-10-02 — Spring Boot 4 and JUnit 6
+
+- **Context:** spec 7.1 asks for the current stable Spring Boot; CLAUDE.md and spec 12 say "JUnit 5".
+  Spring Boot 4 brings Jackson 3 and manages JUnit 6, which keeps the JUnit Jupiter API.
+- **Decision:** Spring Boot 4.x; tests use the JUnit Jupiter API on JUnit 6. "JUnit 5" is read as "JUnit Jupiter".
+  Approved by the user.
+- **Alternatives:** Spring Boot 3.5 with JUnit 5.
+
+## 2026-10-02 — Testcontainers from step 2
+
+- **Context:** once the app has a datasource (step 2), its startup test needs a database; spec 12 plans
+  Testcontainers for the `app` integration tests.
+- **Decision:** Testcontainers PostgreSQL is introduced in step 2. `./gradlew build` needs a running Docker from then on.
+  Approved by the user.
+- **Alternatives:** an in-memory database (diverges from Postgres), or no startup test until step 11.
