@@ -25,3 +25,8 @@ dist-ssr
 
 # Generated from openapi.json by `npm run generate:api`
 src/api/schema.d.ts
+
+# Playwright
+test-results
+playwright-report
+blob-report

@@ -511,3 +511,23 @@ Newest entries at the bottom.
     converted to display units.
   - The detail page is loaded on demand (it shares the ECharts chunk with the session screen).
 - **Alternatives:** a dialog for create / edit; several metrics in one trend chart; a free colour field only.
+
+## 2026-10-02 — Playwright smoke test (step 21)
+
+- **Context:** spec 12 asks for an E2E smoke test: upload a golden file → session opens → brush a window → metrics
+  panel shows values → save as segment.
+- **Decision:**
+  - `frontend/e2e/smoke.spec.ts` with `@playwright/test`, Chromium only (desktop only, spec 10.3). It uses the
+    shortest golden file and checks real values: the window in the URL, the window's elapsed time in the metrics
+    panel, and the saved segment through the API.
+  - **Saving needs free time:** the laps of every golden file cover the whole session and segments must not overlap,
+    so the test resets the segments to the laps and deletes lap 1 before *Save as segment*, as a user has to today.
+    Whether saving should cut the window out of overlapped segments is open (discussed with the user, no change yet).
+  - `infra/scripts/e2e.sh` starts a separate compose project (ports 18081 / 15433, image tag `e2e`, own volumes),
+    runs the test and removes the project, so the local stack and its data are never touched; the compose file's
+    image tag became `${APP_IMAGE_TAG:-local}` for this. A re-run against the same stack also passes.
+  - CI runs it in an `e2e` job and keeps the Playwright report and traces of a failure. It is not part of
+    `./gradlew build`, which needs no running stack.
+  - Vitest skips `e2e/`.
+- **Alternatives:** running against the dev stack (would change the user's data); Playwright's `webServer` starting
+  `bootRun` (needs a database anyway); several browsers.

@@ -1,6 +1,6 @@
-/// <reference types="vitest/config" />
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { configDefaults } from 'vitest/config'
 
 // The backend the dev server proxies to: ./infra/scripts/dev-up.sh (or bootRun) serves it on 8080.
 const backend = process.env.API_TARGET ?? 'http://localhost:8080'
@@ -26,6 +26,8 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // e2e/ holds the Playwright smoke test, run by infra/scripts/e2e.sh.
+    exclude: [...configDefaults.exclude, 'e2e/**'],
     setupFiles: ['./src/test/setup.ts'],
   },
 })

@@ -60,6 +60,19 @@ in sync: after an API change, run `./gradlew :app:test -PupdateGolden`, then fix
 
 CI (GitHub Actions) runs both on every push and pull request.
 
+## End-to-end smoke test
+
+The Playwright smoke test (spec 12) uploads a golden FIT file, opens the session, brushes a window, checks the metrics
+panel and saves the window as a segment. It runs against a fresh stack of its own (other ports, image tag and
+volumes), which is removed afterwards, so the local stack and its data are not touched:
+
+```
+cd frontend && npm ci && npx playwright install chromium && cd ..
+./infra/scripts/e2e.sh
+```
+
+CI runs it on every push.
+
 ## Base maps
 
 The session map uses [OpenFreeMap](https://openfreemap.org/) vector tiles by default: free, no key, attribution shown

@@ -43,3 +43,28 @@ jobs:
           version: v4.3.0
       # helm lint and helm template with the example values (spec 7.5)
       - run: ./infra/scripts/helm-check.sh
+
+  e2e:
+    name: E2E smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      # Builds the image, starts a fresh stack of its own, runs the Playwright smoke test and removes the stack (spec 12).
+      - run: ./infra/scripts/e2e.sh
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
