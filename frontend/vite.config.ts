@@ -9,8 +9,13 @@ const backend = process.env.API_TARGET ?? 'http://localhost:8080'
 export default defineConfig({
   plugins: [react()],
   build: {
-    // The session screen is its own chunk of about 560 kB, nearly all ECharts; the rest of the app stays small.
-    chunkSizeWarningLimit: 600,
+    // The session screen's charts (ECharts, about 560 kB) and its map (MapLibre, about 1 MB) are chunks of their own,
+    // loaded on demand; the rest of the app stays small.
+    chunkSizeWarningLimit: 1100,
+  },
+  // MapLibre's worker is an ES module importing a shared chunk.
+  worker: {
+    format: 'es',
   },
   server: {
     port: 5173,

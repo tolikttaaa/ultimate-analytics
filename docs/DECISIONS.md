@@ -418,3 +418,30 @@ Newest entries at the bottom.
     The map is a placeholder until step 17.
 - **Alternatives:** one ECharts instance with three grids and `axisPointer.link` (keeps lttb, but the spec names
   `connect`); syncing the axis pointer by hand next to `connect`; `average` / `max` sampling (still differs by chart).
+
+## 2026-10-02 — Session map and base maps (step 17)
+
+- **Context:** spec 10.2 wants a vector and a satellite base map, with tile URLs and keys from frontend config and the
+  provider terms checked by the implementer. Spec 11 wants one image for every environment.
+- **Decision:**
+  - **Vector base map: [OpenFreeMap](https://openfreemap.org/) (Liberty style)** by default: free, no key, no
+    registration, no request limits; the required attribution is added by MapLibre.
+  - **Satellite only when configured.** No satellite source is usable without an account: Esri World Imagery needs an
+    ArcGIS Online / Enterprise licence (keyless use is allowed only for OpenStreetMap editing), MapTiler's free plan
+    needs a key and covers non-commercial use only, and free Sentinel-2 mosaics (10 m pixels) are too coarse for a
+    field. `app.map.satellite.tiles-url` (env `APP_MAP_SATELLITE_TILES_URL`) takes an XYZ URL with the user's own key;
+    without it the switch is hidden. README, "Base maps", has an example.
+  - **Config at runtime:** `GET /api/config` serves `app.map.*`, so compose (env vars) and Helm (values) configure the
+    same image; a Vite build-time variable would bake keys into the jar. This endpoint is an addition to spec 9.1.
+    A tile key reaches every browser anyway, so it should be restricted to the host at the provider.
+  - Tile requests tell the provider which area is viewed (around the training places).
+  - Layers, bottom to top: geozone (fill and dashed outline in its surface colour; circles drawn with 64 vertices),
+    track with a light casing, window, effort starts, chart cursor. The view fits the track on load.
+  - The window comes from the URL (`?from=&to=`), which the brush of step 18 will write; an invalid window is ignored.
+  - The chart cursor reaches the map through a small store, not React state, so mouse moves do not re-render the
+    screen.
+  - MapLibre 6 finds its worker next to its own module, which bundling moves: Vite builds the worker
+    (`?worker&url`, ES format) and `setWorkerUrl` points to it. MapLibre is a chunk of its own (about 1 MB), loaded
+    after the charts; the chunk size warning limit is 1100 kB.
+- **Alternatives:** Esri World Imagery without a key (not allowed by its terms); `VITE_*` build-time config; fitting
+  the view to track and geozone together.

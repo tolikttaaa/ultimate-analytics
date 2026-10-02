@@ -50,6 +50,17 @@ app:
   analysis:
     # Maximum heart rate for the HR zones (spec 6.2)
     hr-max: 190
+  map:
+    # Base maps of the frontend (spec 10.2), served by GET /api/config. OpenFreeMap: free, no key, attribution shown
+    # by MapLibre.
+    vector-style-url: https://tiles.openfreemap.org/styles/liberty
+    satellite:
+      # XYZ raster tiles with {z}/{x}/{y}, usually with a provider key: set APP_MAP_SATELLITE_TILES_URL per
+      # environment, never commit it. Empty: no satellite base map.
+      tiles-url: ""
+      attribution: ""
+      max-zoom: 19
+      tile-size: 256
 
 springdoc:
   # Stable key order, so the OpenAPI snapshot the frontend types are generated from only changes with the API.

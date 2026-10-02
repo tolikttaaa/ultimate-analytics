@@ -4,12 +4,13 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createQueryClient } from './api/queryClient'
-import { sessionDetail, sessionPage, sessionSeries, sessionSummary } from './test/data'
+import { sessionDetail, sessionPage, sessionSeries, sessionSummary, uiConfig } from './test/data'
 import { fakeApi } from './test/fakeApi'
 import { routes } from './routes'
 
-// jsdom has no canvas.
+// jsdom has no canvas and no WebGL.
 vi.mock('./components/charts/EChart', () => ({ EChart: () => null }))
+vi.mock('./components/map/SessionMap', () => ({ SessionMap: () => null }))
 
 /** Answers the API calls of the screens with fixed data. */
 function stubApi() {
@@ -19,6 +20,8 @@ function stubApi() {
     'GET /api/sessions/s1/series': () => sessionSeries(),
     'GET /api/sessions/s1/efforts': () => [],
     'GET /api/drill-types': () => [],
+    'GET /api/config': () => uiConfig(),
+    'GET /api/geozones': () => [],
     'GET /api/analysis/parameters': () => ({ analysisVersion: 1, parameters: {} }),
   })
 }

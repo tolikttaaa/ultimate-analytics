@@ -33,7 +33,7 @@ class ApiFoundationTest : IntegrationTest() {
             "get /api/drill-types", "post /api/drill-types", "patch /api/drill-types/{id}",
             "delete /api/drill-types/{id}", "get /api/drill-types/{id}/stats",
             "get /api/geozones", "post /api/geozones", "patch /api/geozones/{id}", "delete /api/geozones/{id}",
-            "get /api/analysis/parameters",
+            "get /api/analysis/parameters", "get /api/config",
         )
         val paths = get("/v3/api-docs").json["paths"]
 

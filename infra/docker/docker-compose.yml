@@ -37,6 +37,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       APP_STORAGE_RAW_DIR: /data/raw
+      # Optional satellite base map (README, "Base maps"); empty leaves it out
+      APP_MAP_SATELLITE_TILES_URL: ${APP_MAP_SATELLITE_TILES_URL:-}
+      APP_MAP_SATELLITE_ATTRIBUTION: ${APP_MAP_SATELLITE_ATTRIBUTION:-}
+      APP_MAP_SATELLITE_TILE_SIZE: ${APP_MAP_SATELLITE_TILE_SIZE:-256}
     ports:
       - "127.0.0.1:${APP_PORT:-8080}:8080"
     volumes:

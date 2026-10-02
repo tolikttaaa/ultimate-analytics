@@ -32,6 +32,18 @@ spec:
             - name: SPRING_CONFIG_ADDITIONAL_LOCATION
               value: optional:file:/config/
             {{- include "ultimate-analytics.databaseEnv" . | nindent 12 }}
+            {{- with .Values.map.vectorStyleUrl }}
+            - name: APP_MAP_VECTOR_STYLE_URL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.map.satellite.tilesUrl }}
+            - name: APP_MAP_SATELLITE_TILES_URL
+              value: {{ . | quote }}
+            - name: APP_MAP_SATELLITE_ATTRIBUTION
+              value: {{ $.Values.map.satellite.attribution | quote }}
+            - name: APP_MAP_SATELLITE_TILE_SIZE
+              value: {{ $.Values.map.satellite.tileSize | quote }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 8080

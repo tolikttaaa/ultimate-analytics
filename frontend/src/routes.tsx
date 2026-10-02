@@ -7,6 +7,8 @@ import { SessionsPage } from './pages/sessions/SessionsPage'
 export const routes: RouteObject[] = [
   {
     element: <AppLayout />,
+    // Shown while a screen loaded on demand arrives on the first page load.
+    hydrateFallbackElement: <p className="loading">Loading…</p>,
     children: [
       { index: true, element: <SessionsPage /> },
       // Loaded on demand: the charts (ECharts) are most of the bundle.

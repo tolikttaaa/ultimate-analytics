@@ -4,6 +4,7 @@ import {
   accelChartOption,
   heartRateChartOption,
   pauseRanges,
+  pointerTime,
   recordedSpeedPoints,
   segmentColor,
   segmentLabel,
@@ -140,5 +141,12 @@ describe('zoomedRange', () => {
   it('converts the zoom percentages to t', () => {
     expect(zoomedRange({ dataZoom: [{ start: 25, end: 50 }] }, 1200)).toEqual([300, 600])
     expect(zoomedRange({}, 1200)).toEqual([0, 1200])
+  })
+})
+
+describe('pointerTime', () => {
+  it('reads t from an axis pointer event, or null when the pointer left', () => {
+    expect(pointerTime({ axesInfo: [{ axisDim: 'x', axisIndex: 0, value: 754.6 }] })).toBe(755)
+    expect(pointerTime({ axesInfo: [] })).toBeNull()
   })
 })

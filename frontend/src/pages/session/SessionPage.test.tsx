@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { drillType, effort, segment, sessionDetail, sessionSeries } from '../../test/data'
+import { drillType, effort, geozone, segment, sessionDetail, sessionSeries, uiConfig } from '../../test/data'
 import { fakeApi, problem } from '../../test/fakeApi'
 import { renderPage } from '../../test/render'
 import { SessionPage } from './SessionPage'
@@ -11,13 +11,24 @@ vi.mock('../../components/charts/EChart', () => ({
   EChart: ({ option }: { option: { title: { text: string } } }) => <div role="img" aria-label={option.title.text} />,
 }))
 
-function renderSession(overrides: Parameters<typeof sessionDetail>[0] = {}) {
+// jsdom has no WebGL either: the map renders what it was given.
+vi.mock('../../components/map/SessionMap', () => ({
+  SessionMap: ({ timeWindow, geozone, config }: { timeWindow: number[] | null; geozone: { name: string } | null; config: { vectorStyleUrl: string } }) => (
+    <div role="region" aria-label="Map">
+      {config.vectorStyleUrl} · window {timeWindow ? timeWindow.join('–') : 'none'} · geozone {geozone?.name ?? 'none'}
+    </div>
+  ),
+}))
+
+function renderSession(overrides: Parameters<typeof sessionDetail>[0] = {}, url = '/sessions/s1') {
   let detail = sessionDetail({ segments: [segment({ endT: 3900 })], ...overrides })
   const calls = fakeApi({
     'GET /api/sessions/s1': () => detail,
     'GET /api/sessions/s1/series': () => sessionSeries(),
     'GET /api/sessions/s1/efforts': () => [effort()],
     'GET /api/drill-types': () => [drillType()],
+    'GET /api/config': () => uiConfig(),
+    'GET /api/geozones': () => [geozone()],
     'PATCH /api/sessions/s1': (call) => {
       detail = { ...detail, ...(call.body as object), surfaceSource: 'MANUAL' }
       return detail
@@ -27,7 +38,7 @@ function renderSession(overrides: Parameters<typeof sessionDetail>[0] = {}) {
       return detail
     },
   })
-  renderPage(<SessionPage />, '/sessions/s1', '/sessions/:id')
+  renderPage(<SessionPage />, url, '/sessions/:id')
   return calls
 }
 
@@ -57,6 +68,19 @@ describe('SessionPage', () => {
     expect(metrics.getByText('Mean acceleration (GPS)').closest('tr')).toHaveAttribute('title', expect.stringContaining('1 Hz GPS'))
     expect(metrics.getByText('Zone 5').nextSibling).toHaveTextContent('15 %')
     expect(metrics.getByText('Sprint').nextSibling).toHaveTextContent('5:00 · 900 m')
+  })
+
+  it('shows the map with the window of the URL and the matched geozone', async () => {
+    renderSession({ geozoneId: 'g1', geozoneName: 'Akrotiri field' }, '/sessions/s1?from=600&to=1200')
+
+    expect(await screen.findByRole('region', { name: 'Map' })).toHaveTextContent(
+      'https://tiles.openfreemap.org/styles/liberty · window 600–1200 · geozone Akrotiri field',
+    )
+  })
+
+  it('ignores a window that does not fit the session', async () => {
+    renderSession({}, '/sessions/s1?from=600&to=99999')
+    expect(await screen.findByRole('region', { name: 'Map' })).toHaveTextContent('window none · geozone none')
   })
 
   it('warns about Smart recording', async () => {

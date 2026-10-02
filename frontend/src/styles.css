@@ -396,15 +396,59 @@ input {
   text-overflow: ellipsis;
 }
 
+.session-map {
+  height: 340px;
+  margin-bottom: 16px;
+}
+
 .map-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 300px;
-  margin-bottom: 16px;
+  height: 100%;
   border: 1px dashed var(--color-border);
   border-radius: 8px;
   color: var(--color-muted);
+}
+
+.map-view {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+/* Sized, not positioned: MapLibre makes its container `position: relative`. */
+.map-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.basemap-switch {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 15%);
+}
+
+.basemap-switch button {
+  padding: 4px 10px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.basemap-switch button[aria-pressed='true'] {
+  background: var(--color-accent);
+  color: #fff;
 }
 
 .metrics-table {

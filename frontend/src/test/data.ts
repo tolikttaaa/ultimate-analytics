@@ -1,6 +1,7 @@
 import type {
   DrillType,
   Effort,
+  Geozone,
   Segment,
   SessionDetail,
   SessionPage,
@@ -8,6 +9,7 @@ import type {
   SessionSummary,
   WindowMetrics,
 } from '../api/types'
+import type { components } from '../api/schema'
 
 export function sessionSummary(overrides: Partial<SessionSummary> = {}): SessionSummary {
   return {
@@ -145,4 +147,18 @@ export function segment(overrides: Partial<Segment> = {}): Segment {
 
 export function drillType(overrides: Partial<DrillType> = {}): DrillType {
   return { id: 'd1', code: 'sprints', name: 'Sprints', kind: 'DRILL', color: '#e65100', ...overrides }
+}
+
+export function geozone(overrides: Partial<Geozone> = {}): Geozone {
+  return {
+    id: 'g1',
+    name: 'Akrotiri field',
+    surface: 'GRASS',
+    shape: { type: 'circle', lat: 34.70786, lon: 33.12787, radiusM: 150, coordinates: null },
+    ...overrides,
+  }
+}
+
+export function uiConfig(): components['schemas']['UiConfig'] {
+  return { map: { vectorStyleUrl: 'https://tiles.openfreemap.org/styles/liberty', satellite: null } }
 }

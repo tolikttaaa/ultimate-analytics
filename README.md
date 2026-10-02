@@ -60,6 +60,21 @@ in sync: after an API change, run `./gradlew :app:test -PupdateGolden`, then fix
 
 CI (GitHub Actions) runs both on every push and pull request.
 
+## Base maps
+
+The session map uses [OpenFreeMap](https://openfreemap.org/) vector tiles by default: free, no key, attribution shown
+on the map. A satellite base map is optional because the satellite providers need an account key and have their own
+terms. To add one, set an XYZ raster tile URL in `infra/docker/.env` (or the Helm values) and restart:
+
+```
+APP_MAP_SATELLITE_TILES_URL=https://api.maptiler.com/tiles/satellite-v4/{z}/{x}/{y}?key=YOUR_KEY
+APP_MAP_SATELLITE_ATTRIBUTION=© MapTiler
+```
+
+This example is MapTiler, whose free plan covers personal and non-commercial use. Read the provider's terms for
+attribution and limits, check its tile size (`APP_MAP_SATELLITE_TILE_SIZE`, 256 by default), and restrict the key to
+your host: the browser sees it.
+
 ## Server deployment (future)
 
 The POC runs locally only. `infra/helm/ultimate-analytics` is a chart skeleton for a later server deployment

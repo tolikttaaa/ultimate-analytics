@@ -28,6 +28,16 @@ config:
   # Content of infra/config/application-server.yml, rendered into a ConfigMap (required; pass it with --set-file).
   applicationServerYml: ""
 
+map:
+  # Base maps of the frontend (app.map.*); empty values keep the defaults of application.yml (OpenFreeMap, no
+  # satellite).
+  vectorStyleUrl: ""
+  satellite:
+    # XYZ raster tile URL with {z}/{x}/{y}, usually with a provider key; empty: no satellite base map
+    tilesUrl: ""
+    attribution: ""
+    tileSize: 256
+
 migrations:
   # Runs the Flyway migrations of infra:db-migrations in a pre-install / pre-upgrade Job (spec 7.5).
   enabled: true

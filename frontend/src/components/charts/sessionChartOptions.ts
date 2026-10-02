@@ -182,6 +182,12 @@ export function zoomedRange(option: unknown, lastT: number): [number, number] {
   return [((zoom?.start ?? 0) / 100) * lastT, ((zoom?.end ?? 100) / 100) * lastT]
 }
 
+/** The t of an `updateAxisPointer` event, or null when the pointer left the charts. */
+export function pointerTime(event: unknown): number | null {
+  const value = (event as { axesInfo?: { value?: number }[] }).axesInfo?.[0]?.value
+  return value == null ? null : Math.round(value)
+}
+
 /** Heart rate; carries the zoom slider of the whole group. */
 export function heartRateChartOption(series: SessionSeries, lastT: number): EChartsCoreOption {
   return {

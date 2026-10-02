@@ -1,10 +1,18 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, unwrap } from './client'
 import { sessionKeys } from './sessions'
 import type { GeozoneCreate } from './types'
 
 export const geozoneKeys = {
   all: ['geozones'] as const,
+}
+
+/** GET /api/geozones: all geozones; few enough to load at once. */
+export function useGeozones() {
+  return useQuery({
+    queryKey: geozoneKeys.all,
+    queryFn: () => unwrap(api.GET('/api/geozones')),
+  })
 }
 
 /** POST /api/geozones: also classifies the sessions again, so session queries are refreshed. */

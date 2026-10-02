@@ -20,3 +20,9 @@ ingress:
   tls:
     enabled: true
     secretName: analytics-example-com-tls
+
+# Optional satellite base map; the key is visible to every browser, so restrict it to your host at the provider.
+# map:
+#   satellite:
+#     tilesUrl: https://api.maptiler.com/tiles/satellite-v4/{z}/{x}/{y}?key=YOUR_KEY
+#     attribution: "© MapTiler"

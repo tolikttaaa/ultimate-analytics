@@ -28,6 +28,25 @@
         "tags" : [ "Recompute" ]
       }
     },
+    "/api/config" : {
+      "get" : {
+        "operationId" : "config",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UiConfig"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Frontend settings: the base maps and their tile sources",
+        "tags" : [ "Config" ]
+      }
+    },
     "/api/drill-types" : {
       "get" : {
         "operationId" : "list_1",
@@ -1512,6 +1531,22 @@
         },
         "required" : [ "endT", "index", "startT" ]
       },
+      "MapConfig" : {
+        "type" : "object",
+        "properties" : {
+          "satellite" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/SatelliteConfig"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "vectorStyleUrl" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "vectorStyleUrl" ]
+      },
       "MeanAndBest" : {
         "type" : "object",
         "properties" : {
@@ -1563,6 +1598,26 @@
           }
         },
         "required" : [ "count" ]
+      },
+      "SatelliteConfig" : {
+        "type" : "object",
+        "properties" : {
+          "attribution" : {
+            "type" : "string"
+          },
+          "maxZoom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "tileSize" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "tilesUrl" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "attribution", "maxZoom", "tileSize", "tilesUrl" ]
       },
       "SegmentCreate" : {
         "type" : "object",
@@ -1969,6 +2024,15 @@
           }
         },
         "required" : [ "durationSec", "fromT", "toT" ]
+      },
+      "UiConfig" : {
+        "type" : "object",
+        "properties" : {
+          "map" : {
+            "$ref" : "#/components/schemas/MapConfig"
+          }
+        },
+        "required" : [ "map" ]
       },
       "UploadResult" : {
         "type" : "object",
