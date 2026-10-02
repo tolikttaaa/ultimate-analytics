@@ -1,0 +1,18 @@
+device: garmin fr965
+sport: disc_golf / ultimate
+startTime: 2026-04-11T06:03:35Z
+localTzOffsetSec: 10800
+totalElapsedSec: 8631.582
+totalTimerSec: 8631.582
+totalDistanceM: 5516.14
+startPosition: GeoPoint(lat=34.70800207927823, lon=33.12803730368614)
+records: 3274, 2026-04-11T06:03:35Z .. 2026-04-11T08:27:27Z
+records without speed: 0, position: 0, heart rate: 0, distance: 0, altitude: 3274
+record intervals (s=count): {1=1076, 2=774, 3=490, 4=386, 5=288, 6=259}
+max speed: 6.989
+laps:
+  2026-04-11T06:03:35Z .. 2026-04-11T08:27:26.582Z session_end
+timer events:
+  2026-04-11T06:03:35Z START
+  2026-04-11T08:27:27Z STOP
+records sha256: 926600b10044eb4e3f58e909f2fd0e8a1f90322713d5f159e232d8e60655ce24

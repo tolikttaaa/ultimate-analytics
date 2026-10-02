@@ -104,3 +104,24 @@ Newest entries at the bottom.
   - `ANALYSIS_VERSION` lives in `analysis` (spec 8.2). `AnalysisVersionTest` keeps the defaults of every version and
     fails when a default changes without a version bump.
 - **Alternatives:** follow the sketch literally (ids on efforts, lat/lon pairs); define `WindowMetrics` in step 9.
+
+## 2026-10-02 — FIT parsing (step 4)
+
+- **Context:** spec 4.1 lists the FIT messages to read; the first real files (13 FR965 trainings provided by the user,
+  see `fit-parser/src/test/resources/fit/README.md`) show details the spec does not cover.
+- **Decision:**
+  - The parser output (`RawSession`, `RawRecord`, `RawLap`, `TimerEvent`) lives in `domain`, so `analysis` can consume
+    it without depending on `fit-parser` (spec 7.2).
+  - The Ultimate Disc profile writes `sport = disc_golf`, `sub_sport = ultimate` (answers spec 14, first question).
+    Other sports are parsed with a warning logged through `System.Logger`, which needs no logging dependency;
+    Spring Boot routes it to its logging.
+  - Lap end = `start_time + total_elapsed_time`: the FR965 writes the activity start into the lap `timestamp` field.
+  - The local time offset comes from the `activity` message (`local_timestamp − timestamp`), not listed in spec 4.1.
+  - Scaled values (speed, distance, altitude, totals) are read with `getFieldDoubleValue`, because the SDK's typed
+    getters return `Float` and turn `1.11` into `1.1100000143051147`.
+  - Typed errors (`FitParseException`): not a FIT file, corrupted (CRC), not an activity, no session, no records.
+    Records without a timestamp and positions outside the valid range are dropped.
+  - Golden tests compare a readable summary plus a SHA-256 of all records with approved snapshots in
+    `src/test/resources/fit/expected/`; `-PupdateGolden` rewrites them. All 13 files are committed as golden files.
+- **Alternatives:** raw types in `fit-parser` with a copy in `analysis`; SLF4J as a dependency of `fit-parser`;
+  full JSON snapshots of every record.
