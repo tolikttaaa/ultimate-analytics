@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ultimate-analytics.fullname" . }}
+  labels:
+    {{- include "ultimate-analytics.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "ultimate-analytics.selectorLabels" . | nindent 4 }}
+  ports:
+    # Only the API and the SPA; the management port with the probes stays inside the pod.
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: http

@@ -1,0 +1,66 @@
+# Defaults of the chart. Environment-specific values (image, database, host) go into a values file per environment;
+# see values-server.example.yaml. Install with:
+#   helm upgrade --install analytics infra/helm/ultimate-analytics -f values-server.yaml \
+#     --set-file config.applicationServerYml=infra/config/application-server.yml
+
+image:
+  # Built from infra/docker/Dockerfile
+  repository: ultimate-analytics
+  # Defaults to the chart's appVersion
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# One replica: the raw-file volume is ReadWriteOnce. More replicas need an S3-compatible RawFileStore (spec 8.3).
+replicaCount: 1
+
+database:
+  # JDBC URL, e.g. jdbc:postgresql://postgres:5432/ultimate (required)
+  url: ""
+  # Name of an existing Secret with the credentials. Without it the chart creates one from username and password.
+  existingSecret: ""
+  usernameKey: username
+  passwordKey: password
+  # Only used without existingSecret
+  username: ""
+  password: ""
+
+config:
+  # Content of infra/config/application-server.yml, rendered into a ConfigMap (required; pass it with --set-file).
+  applicationServerYml: ""
+
+migrations:
+  # Runs the Flyway migrations of infra:db-migrations in a pre-install / pre-upgrade Job (spec 7.5).
+  enabled: true
+
+storage:
+  # Raw FIT files (spec 8.3). The volume is kept when the release is uninstalled.
+  size: 5Gi
+  storageClassName: ""
+  accessMode: ReadWriteOnce
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  host: ""
+  annotations: {}
+  tls:
+    enabled: false
+    secretName: ""
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    memory: 1Gi
+
+# The image runs as this non-root user (infra/docker/Dockerfile).
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 999
+  runAsGroup: 999
+  fsGroup: 999

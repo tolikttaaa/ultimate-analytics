@@ -1,0 +1,26 @@
+# `server` profile (future deployment, spec 7.5). The Helm chart renders this file into a ConfigMap
+# (`--set-file config.applicationServerYml=infra/config/application-server.yml`), mounted through
+# SPRING_CONFIG_ADDITIONAL_LOCATION. Database URL and credentials come from environment variables (SPRING_DATASOURCE_*),
+# the credentials from a Kubernetes Secret.
+
+spring:
+  flyway:
+    # A Helm pre-install / pre-upgrade Job runs the migrations before the new version starts.
+    enabled: false
+
+management:
+  server:
+    # Liveness and readiness probes on a port of their own, not exposed by the Service.
+    port: 8081
+
+logging:
+  structured:
+    format:
+      # JSON logs to stdout
+      console: ecs
+
+app:
+  storage:
+    type: filesystem
+    # PersistentVolumeClaim of the chart
+    raw-dir: /data/raw

@@ -333,3 +333,25 @@ Newest entries at the bottom.
     algorithm. `recompute-outdated` skips (and logs) sessions that fail, e.g. without a raw file, and returns how many
     were recomputed. A missing raw file is a 404.
 - **Alternatives:** JSON Merge Patch documents; recomputing segment snapshots immediately.
+
+## 2026-10-02 — Server deployment skeleton (step 13)
+
+- **Context:** spec 7.5 describes the future `server` profile and the Helm chart in outline only.
+- **Decision:**
+  - `server` profile (`infra/config/application-server.yml`): no Flyway on startup, probes on management port 8081,
+    ECS JSON logs, raw files under `/data/raw`. Database URL and credentials come from environment variables.
+  - Until a login exists, the `server` SecurityFilterChain allows only the health probes and denies everything else,
+    so a server deployment can never be open by accident; both profiles have an empty user store, so Spring Boot never
+    creates a default user with a logged password. Security beans exist only in web applications.
+  - The migration Job runs the app image with `--spring.main.web-application-type=none --spring.flyway.enabled=true`:
+    the same migrations from the same image; the app migrates and exits (verified in a read-only, non-root container).
+  - The chart renders `application-server.yml` into a ConfigMap from `--set-file`, so `infra/config` stays the single
+    source. Credentials come from an existing Secret (`database.existingSecret`); without one the chart creates a
+    Secret as a pre-install hook, because the migration Job needs it before regular resources exist.
+  - One replica with the `Recreate` strategy, because the raw-file volume is ReadWriteOnce; the PVC is kept on
+    uninstall (`helm.sh/resource-policy: keep`), as raw files are the source of all data. The container runs as the
+    fixed non-root user 999 with a read-only root filesystem.
+  - CI is GitHub Actions (chosen by the user): `./gradlew build` with Testcontainers on the runner's Docker, and
+    `infra/scripts/helm-check.sh` (`helm lint --strict` and `helm template`) with Helm 4.3.
+- **Alternatives:** a separate Flyway image for migrations; relying on Spring Boot's default security
+  (form login with a generated password); copying the profile config into the chart.

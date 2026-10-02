@@ -1,5 +1,7 @@
 # Ultimate Analytics
 
+[![CI](https://github.com/tolikttaaa/ultimate-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/tolikttaaa/ultimate-analytics/actions/workflows/ci.yml)
+
 A single-user web app that stores Ultimate Frisbee training sessions recorded on a Garmin watch (FIT files)
 and computes sprint-oriented analytics: pauses, efforts (sprints / cuts) and metrics per session, segment,
 drill type and any selected time window.
@@ -49,7 +51,28 @@ cd frontend && npm run dev           # Vite dev server, proxies /api to the app
 
 ```sh
 ./gradlew build                      # compile and run all tests (integration tests need a running Docker)
+./infra/scripts/helm-check.sh        # helm lint and helm template of the chart skeleton
 ```
+
+CI (GitHub Actions) runs both on every push and pull request.
+
+## Server deployment (future)
+
+The POC runs locally only. `infra/helm/ultimate-analytics` is a chart skeleton for a later server deployment
+(spec 7.5): the `server` profile (`infra/config/application-server.yml`), a pre-install / pre-upgrade migration Job,
+probes on a separate management port and JSON logs. Until a login is implemented the `server` profile denies all API
+requests.
+
+```sh
+helm upgrade --install analytics infra/helm/ultimate-analytics -f values-server.yaml \
+  --set-file config.applicationServerYml=infra/config/application-server.yml
+```
+
+See `values-server.example.yaml` for the values to provide.
+
+## License
+
+[MIT](LICENSE)
 
 ## Repository layout
 
@@ -61,5 +84,6 @@ cd frontend && npm run dev           # Vite dev server, proxies /api to the app
 | `app/` | Spring Boot application: REST API, persistence, storage, security, static frontend |
 | `infra/db-migrations/` | Flyway SQL migrations, packaged as a resources-only jar |
 | `infra/docker/`, `infra/config/`, `infra/scripts/` | Image, local compose stack, profile configs, scripts |
+| `infra/helm/ultimate-analytics/` | Helm chart skeleton for a future server deployment |
 | `frontend/` | React + TypeScript SPA |
 | `notebooks/` | Kotlin Notebooks for calibration |

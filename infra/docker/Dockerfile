@@ -10,8 +10,9 @@ RUN --mount=type=cache,target=/root/.gradle \
 RUN java -Djarmode=tools -jar app/build/libs/ultimate-analytics.jar extract --layers --destination extracted
 
 FROM eclipse-temurin:21-jre
-RUN groupadd --system app \
-    && useradd --system --gid app --no-create-home app \
+# Fixed ids: the Helm chart runs the container as this user (runAsUser / fsGroup 999).
+RUN groupadd --system --gid 999 app \
+    && useradd --system --uid 999 --gid app --no-create-home app \
     && mkdir -p /data/raw \
     && chown app:app /data/raw
 WORKDIR /app

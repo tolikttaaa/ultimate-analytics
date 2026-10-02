@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ultimate-analytics
+description: Ultimate Frisbee training analytics. Skeleton for a future server deployment (spec 7.5); not deployed in the POC.
+type: application
+version: 0.1.0
+appVersion: "0.1.0-SNAPSHOT"

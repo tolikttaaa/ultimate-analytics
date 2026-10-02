@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ultimate-analytics.fullname" . }}-config
+  labels:
+    {{- include "ultimate-analytics.labels" . | nindent 4 }}
+data:
+  application-server.yml: |
+    {{- required "config.applicationServerYml is required: --set-file config.applicationServerYml=infra/config/application-server.yml" .Values.config.applicationServerYml | nindent 4 }}

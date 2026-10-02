@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ultimate-analytics.fullname" . }}-raw-files
+  labels:
+    {{- include "ultimate-analytics.labels" . | nindent 4 }}
+  annotations:
+    # The raw FIT files are the source of everything else (spec 1); keep them when the release is uninstalled.
+    "helm.sh/resource-policy": keep
+spec:
+  accessModes:
+    - {{ .Values.storage.accessMode }}
+  {{- with .Values.storage.storageClassName }}
+  storageClassName: {{ . }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.storage.size }}

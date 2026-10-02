@@ -1,0 +1,47 @@
+{{- if .Values.migrations.enabled }}
+# Runs the Flyway migrations from the infra:db-migrations jar in the app image before an install or upgrade
+# (spec 7.5): the app starts without a web server, migrates and exits. The app itself never migrates in this profile.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "ultimate-analytics.fullname" . }}-migrate
+  labels:
+    {{- include "ultimate-analytics.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        {{- include "ultimate-analytics.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: migration
+    spec:
+      restartPolicy: Never
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: migrate
+          image: {{ include "ultimate-analytics.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --spring.main.web-application-type=none
+            - --spring.flyway.enabled=true
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: server
+            - name: LOGGING_STRUCTURED_FORMAT_CONSOLE
+              value: ecs
+            {{- include "ultimate-analytics.databaseEnv" . | nindent 12 }}
+          securityContext:
+            {{- include "ultimate-analytics.containerSecurityContext" . | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- end }}
