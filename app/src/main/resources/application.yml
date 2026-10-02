@@ -3,6 +3,11 @@
 spring:
   application:
     name: ultimate-analytics
+  datasource:
+    hikari:
+      data-source-properties:
+        # Lets the PostgreSQL driver turn batched sample inserts into multi-row inserts.
+        reWriteBatchedInserts: true
   profiles:
     active: local
   lifecycle:
@@ -24,3 +29,15 @@ management:
     health:
       probes:
         enabled: true
+
+app:
+  storage:
+    # RawFileStore implementation (spec 7.5, 8.3)
+    type: filesystem
+    raw-dir: ./storage/raw
+  upload:
+    # Per-file limit, also for each .fit inside a .zip
+    max-file-size: 20MB
+  analysis:
+    # Maximum heart rate for the HR zones (spec 6.2)
+    hr-max: 190

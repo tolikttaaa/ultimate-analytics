@@ -26,6 +26,7 @@ class SessionTest {
         surfaceSource = SurfaceSource.NONE,
         notes = null,
         analysisVersion = 1,
+        recordingMode = RecordingMode.EVERY_SECOND,
     )
 
     @Test

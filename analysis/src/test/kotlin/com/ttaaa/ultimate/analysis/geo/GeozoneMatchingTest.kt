@@ -5,6 +5,7 @@ import com.ttaaa.ultimate.analysis.geo.Places.offset
 import com.ttaaa.ultimate.domain.GeoPoint
 import com.ttaaa.ultimate.domain.Geozone
 import com.ttaaa.ultimate.domain.GeozoneShape
+import com.ttaaa.ultimate.domain.RecordingMode
 import com.ttaaa.ultimate.domain.Session
 import com.ttaaa.ultimate.domain.Surface
 import com.ttaaa.ultimate.domain.SurfaceSource
@@ -34,6 +35,7 @@ class GeozoneMatchingTest {
         localTzOffsetSec = null, elapsedSec = 3600, timerSec = 3600, distanceM = null, device = null, sport = null,
         subSport = null, startPosition = FIELD, geozoneId = geozoneId, surface = surface, surfaceSource = source,
         notes = null, analysisVersion = 1,
+        recordingMode = RecordingMode.EVERY_SECOND,
     )
 
     @Test

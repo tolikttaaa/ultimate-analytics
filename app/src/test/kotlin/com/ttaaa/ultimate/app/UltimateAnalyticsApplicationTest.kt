@@ -4,23 +4,14 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
-import org.springframework.context.annotation.Import
-import org.springframework.jdbc.core.simple.JdbcClient
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import(TestcontainersConfiguration::class)
-class UltimateAnalyticsApplicationTest {
+class UltimateAnalyticsApplicationTest : IntegrationTest() {
 
     @LocalServerPort
     private var port: Int = 0
-
-    @Autowired
-    private lateinit var jdbc: JdbcClient
 
     @Test
     fun `application starts and reports health UP`() {
@@ -33,10 +24,10 @@ class UltimateAnalyticsApplicationTest {
     }
 
     @Test
-    fun `flyway applies V1 from the db-migrations jar`() {
-        val v1Success = jdbc.sql("select success from flyway_schema_history where version = '1'")
-            .query(Boolean::class.java)
-            .single()
+    fun `flyway applies the migrations from the db-migrations jar`() {
+        val migrations = jdbc.sql("select version, success from flyway_schema_history order by installed_rank")
+            .query { rs, _ -> rs.getString("version") to rs.getBoolean("success") }
+            .list()
         val tables = jdbc.sql(
             """
             select table_name from information_schema.tables
@@ -46,7 +37,7 @@ class UltimateAnalyticsApplicationTest {
             .query(String::class.java)
             .list()
 
-        v1Success shouldBe true
+        migrations shouldBe listOf("1" to true, "2" to true)
         tables shouldContainExactlyInAnyOrder listOf(
             "drill_type", "geozone", "session", "sample", "lap", "segment", "effort", "metrics_snapshot",
         )

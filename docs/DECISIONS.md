@@ -267,3 +267,38 @@ Newest entries at the bottom.
   - The Kotlin Notebook loads the built jars with `@file:DependsOn` paths relative to `notebooks/`; it has not been run
     in this environment (no Kotlin Notebook kernel available).
 - **Alternatives:** let `analyze` take the geozones and return the match; a geodesic polygon test.
+
+## 2026-10-02 — Persistence and upload details (step 11)
+
+- **Context:** spec 7.4 stores the raw file before parsing, while spec 11 says a failed file stores nothing; several
+  persistence details are open.
+- **Decision:**
+  - Upload order: parse and analyse in memory, then store the raw file, then insert everything in one transaction. A
+    file that fails stores nothing; if the transaction fails, a raw file this upload wrote is deleted again. A
+    concurrent upload of the same file is reported as `DUPLICATE` (unique `file_sha256`).
+  - `session.recording_mode` is added by `V2` (forward-only migrations, spec 7.5). `Session.elapsedSec` is `lastT` (the
+    time axis of all metrics); `timerSec` and `distanceM` are the FIT session totals.
+  - Lap-based segments ("Lap n") are created for laps of at least 10 s that do not overlap an earlier lap; efforts are
+    linked to the segment containing their start (half-open, so a shared boundary belongs to the later segment).
+  - Snapshots of the session and of every segment are computed from samples rounded to the precision of the `sample`
+    table (4-byte floats), so a cached metric always equals the same metric computed later from the database.
+  - JSON columns are written with the application's Jackson mapper: effort metrics and window metrics as the domain
+    data classes, geozone shapes as `{"type":"circle",...}` or GeoJSON Polygons with closed `[lon, lat]` rings.
+  - Zip archives: every `.fit` entry (case-insensitive) is imported on its own and reported as `archive.zip/entry.fit`;
+    macOS `__MACOSX/._*` entries are skipped; `app.upload.max-file-size` applies to each entry as well (protection
+    against zip bombs). Files outside archives are always tried as FIT files.
+  - "SQL lives only in infra:db-migrations" (CLAUDE.md) is read as schema SQL: the JdbcClient repositories required by
+    spec 7.1 contain their queries.
+  - Sample inserts use JDBC batches with the driver's `reWriteBatchedInserts`; the longest golden file (157 min) uploads
+    in about 0.1 s, well under the 2 s target of spec 11.
+  - The `.gitignore` entry for the local raw-file directory is anchored to the repository root (`/storage/`); it used
+    to hide the `app/.../storage` source package.
+- **Alternatives:** store the raw file first and clean up on failure; compute snapshots from unrounded samples.
+
+## 2026-10-02 — Publishing on GitHub
+
+- **Context:** the user asked to publish the project at https://github.com/tolikttaaa.
+- **Decision (chosen by the user):** public repository `tolikttaaa/ultimate-analytics`, including the golden FIT files
+  with GPS tracks and heart rate. Every step commit is pushed to `origin main`; `.claude/settings.json` allows exactly
+  `git push origin main` / `git push -u origin main` and denies force pushes.
+- **Alternatives:** private repository; removing the golden files from the history.

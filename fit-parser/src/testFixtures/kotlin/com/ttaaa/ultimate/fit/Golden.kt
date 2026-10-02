@@ -19,8 +19,8 @@ object Golden {
     /** The golden FIT files, `fit-parser/src/test/resources/fit`. */
     val fitDir: Path = directory("golden.fit.dir")
 
-    /** The approved snapshots of the module under test. */
-    val snapshotDir: Path = directory("golden.snapshot.dir")
+    /** The approved snapshots of the module under test (only needed by modules that verify snapshots). */
+    val snapshotDir: Path by lazy { directory("golden.snapshot.dir") }
 
     private val update = System.getProperty("golden.update").toBoolean()
 

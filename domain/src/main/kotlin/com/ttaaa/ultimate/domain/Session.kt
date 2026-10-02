@@ -31,6 +31,8 @@ data class Session(
     val notes: String?,
     /** `ANALYSIS_VERSION` the stored analysis results were computed with (spec 8.2). */
     val analysisVersion: Int,
+    /** How the watch recorded the session; effort metrics of [RecordingMode.SMART] sessions are low-confidence. */
+    val recordingMode: RecordingMode,
 ) {
     init {
         require(SHA256_HEX.matches(fileSha256)) { "Not a lowercase hex SHA-256: $fileSha256" }

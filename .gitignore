@@ -42,7 +42,7 @@ playwright-report/
 .ipynb_checkpoints/
 
 ### Local data and secrets ###
-storage/
+/storage/
 .env
 values-server.yaml
 

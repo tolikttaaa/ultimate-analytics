@@ -13,8 +13,15 @@
       "Bash(npx *)",
       "Bash(docker compose *)",
       "Bash(./infra/scripts/*)",
-      "Bash(helm *)"
+      "Bash(helm *)",
+      "Bash(git push origin main)",
+      "Bash(git push -u origin main)"
     ],
-    "deny": ["Bash(git push *)"]
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)"
+    ]
   }
 }

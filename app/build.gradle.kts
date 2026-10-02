@@ -31,8 +31,16 @@ dependencies {
     runtimeOnly(libs.postgresql)
 
     testImplementation(libs.spring.boot.starter.test)
+    testImplementation(testFixtures(project(":fit-parser")))
     testImplementation(libs.spring.boot.testcontainers)
     testImplementation(libs.testcontainers.postgresql)
+}
+
+tasks.test {
+    // The golden FIT files of spec 12 serve as real uploads in the integration tests.
+    val goldenFitDir = rootDir.resolve("fit-parser/src/test/resources/fit")
+    inputs.dir(goldenFitDir).withPropertyName("goldenFitFiles").withPathSensitivity(PathSensitivity.RELATIVE)
+    systemProperty("golden.fit.dir", goldenFitDir.absolutePath)
 }
 
 tasks.bootJar {
