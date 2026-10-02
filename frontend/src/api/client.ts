@@ -27,6 +27,14 @@ export class ApiError extends Error {
   }
 }
 
+/** POSTs a multipart form (file uploads); returns the JSON response or throws [ApiError]. */
+export async function postForm<T>(path: string, form: FormData): Promise<T> {
+  const response = await globalThis.fetch(path, { method: 'POST', body: form })
+  const body: unknown = await response.json().catch(() => undefined)
+  if (!response.ok) throw new ApiError(response.status, body as Problem | undefined)
+  return body as T
+}
+
 /** The data of a successful call; throws [ApiError] otherwise, so TanStack Query sees the error. */
 export async function unwrap<T>(call: Promise<{ data?: T; error?: unknown; response: Response }>): Promise<T> {
   const { data, error, response } = await call

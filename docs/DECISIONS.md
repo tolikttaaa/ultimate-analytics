@@ -378,3 +378,19 @@ Newest entries at the bottom.
   - The app answers client-side routes (`/sessions/{id}`, ...) with `index.html`; `/api`, `/actuator`, `/v3`,
     `/swagger-ui` and file-like paths keep their 404.
 - **Alternatives:** generating types from a running backend; committing the generated types; TypeScript 5.9.
+
+## 2026-10-02 — Sessions list and upload dialog (step 15)
+
+- **Context:** spec 10.1 screens 1-2 leave the interaction details open.
+- **Decision:**
+  - Filters (surface, date range) and the page live in the URL, so a reload or a shared link keeps them. Date inputs are
+    calendar days in the browser's time zone, sent as instants (`from` = start of the first day, `to` = start of the day
+    after the last one, exclusive). Start times are shown in the session's own local time (spec 11).
+  - Rows show a *Smart recording* badge (decision on Smart recording support) and an *outdated* badge, each with an
+    explanation on hover.
+  - The upload dialog is a native `<dialog>`; files are sent in one multipart request with `fetch` (the typed client
+    adds nothing for multipart). Each result row of a session at an unknown place offers Grass / Sand (a MANUAL
+    surface) or a new circular geozone around the session's start (default radius 150 m). The rows follow the session
+    queries, so a new geozone that also classifies other sessions shows up everywhere.
+  - No UI component library: plain React and CSS.
+- **Alternatives:** filters in component state only; one request per uploaded file.

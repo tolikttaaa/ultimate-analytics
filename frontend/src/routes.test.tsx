@@ -4,6 +4,7 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createQueryClient } from './api/queryClient'
+import { sessionPage, sessionSummary } from './test/data'
 import { routes } from './routes'
 
 /** Answers the API calls of the app shell with fixed data. */
@@ -11,7 +12,7 @@ function stubApi() {
   vi.stubGlobal('fetch', async (request: Request) => {
     const path = new URL(request.url).pathname
     const body = path === '/api/sessions'
-      ? { items: [{ id: 's1', startTime: '2026-09-30T16:07:47Z', localTzOffsetSec: 10800 }], totalItems: 1, page: 0, size: 20, totalPages: 1 }
+      ? sessionPage([sessionSummary({ startTime: '2026-09-30T16:07:47Z', localTzOffsetSec: 10800 })])
       : { analysisVersion: 1, parameters: {} }
     return new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } })
   })
@@ -33,8 +34,7 @@ describe('routes', () => {
     stubApi()
     renderAt('/')
 
-    expect(await screen.findByText('1 sessions')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '2026-09-30 19:07' })).toHaveAttribute('href', '/sessions/s1')
+    expect(await screen.findByRole('link', { name: '2026-09-30 19:07' })).toHaveAttribute('href', '/sessions/s1')
     expect(await screen.findByText('analysis v1')).toBeInTheDocument()
   })
 

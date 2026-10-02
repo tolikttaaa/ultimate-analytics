@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
-import { api, unwrap } from './client'
-import type { Surface } from './types'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { api, postForm, unwrap } from './client'
+import type { SessionPatch, Surface, UploadResult } from './types'
 
 export interface SessionFilter {
   /** ISO-8601 instant, inclusive */
@@ -24,5 +24,36 @@ export function useSessions(filter: SessionFilter = {}) {
   return useQuery({
     queryKey: sessionKeys.list(filter),
     queryFn: () => unwrap(api.GET('/api/sessions', { params: { query: filter } })),
+  })
+}
+
+/** GET /api/sessions/{id} */
+export function useSession(id: string) {
+  return useQuery({
+    queryKey: sessionKeys.detail(id),
+    queryFn: () => unwrap(api.GET('/api/sessions/{id}', { params: { path: { id } } })),
+  })
+}
+
+/** POST /api/sessions/upload: one result per FIT file, also for every file inside a .zip. */
+export function useUploadSessions() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (files: File[]) => {
+      const form = new FormData()
+      files.forEach((file) => form.append('files', file))
+      return postForm<UploadResult[]>('/api/sessions/upload', form)
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: sessionKeys.all }),
+  })
+}
+
+/** PATCH /api/sessions/{id}: a surface set here becomes MANUAL. */
+export function useUpdateSession() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: SessionPatch }) =>
+      unwrap(api.PATCH('/api/sessions/{id}', { params: { path: { id } }, body: patch })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: sessionKeys.all }),
   })
 }
