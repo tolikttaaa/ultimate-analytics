@@ -1,15 +1,25 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { drillType, effort, geozone, segment, sessionDetail, sessionSeries, uiConfig } from '../../test/data'
+import { drillType, effort, geozone, segment, sessionDetail, sessionSeries, uiConfig, windowMetrics } from '../../test/data'
 import { fakeApi, problem } from '../../test/fakeApi'
 import { renderPage } from '../../test/render'
 import { SessionPage } from './SessionPage'
 
-// jsdom has no canvas: a chart renders as its title.
+// jsdom has no canvas: a chart renders as its title, with buttons standing in for brushing and clicking a marker.
 vi.mock('../../components/charts/EChart', () => ({
-  EChart: ({ option }: { option: { title: { text: string } } }) => <div role="img" aria-label={option.title.text} />,
+  EChart: ({ option, onEvents }: { option: { title?: { text: string } }; onEvents?: Record<string, (event: unknown) => void> }) => (
+    <div role="img" aria-label={option.title?.text ?? 'Effort chart'}>
+      {onEvents?.brushEnd && (
+        <button onClick={() => onEvents.brushEnd({ areas: [{ coordRange: [600.4, 1199.6] }] })}>brush 600–1200</button>
+      )}
+      {onEvents?.click && (
+        <button onClick={() => onEvents.click({ componentType: 'markPoint', data: { effortId: 'e2' } })}>marker e2</button>
+      )}
+    </div>
+  ),
 }))
+vi.mock('../../components/map/EffortMap', () => ({ EffortMap: () => <div>effort map</div> }))
 
 // jsdom has no WebGL either: the map renders what it was given.
 vi.mock('../../components/map/SessionMap', () => ({
@@ -25,7 +35,8 @@ function renderSession(overrides: Parameters<typeof sessionDetail>[0] = {}, url 
   const calls = fakeApi({
     'GET /api/sessions/s1': () => detail,
     'GET /api/sessions/s1/series': () => sessionSeries(),
-    'GET /api/sessions/s1/efforts': () => [effort()],
+    'GET /api/sessions/s1/efforts': () => [effort(), effort({ id: 'e2', startT: 6, peakT: 7, endT: 8 })],
+    'GET /api/sessions/s1/metrics': () => windowMetrics({ decelCount: 4, efforts: { ...windowMetrics().efforts, count: 3 } }),
     'GET /api/drill-types': () => [drillType()],
     'GET /api/config': () => uiConfig(),
     'GET /api/geozones': () => [geozone()],
@@ -38,8 +49,8 @@ function renderSession(overrides: Parameters<typeof sessionDetail>[0] = {}, url 
       return detail
     },
   })
-  renderPage(<SessionPage />, url, '/sessions/:id')
-  return calls
+  const router = renderPage(<SessionPage />, url, '/sessions/:id')
+  return Object.assign(calls, { router })
 }
 
 describe('SessionPage', () => {
@@ -56,7 +67,7 @@ describe('SessionPage', () => {
     }
 
     const strip = screen.getByLabelText('Segments')
-    expect(within(strip).getByText('Sprints')).toHaveStyle({ left: '0%', width: '50%', background: '#e65100' })
+    expect(within(strip).getByText('Sprints').closest('.segment')).toHaveStyle({ left: '0%', width: '50%', background: '#e65100' })
 
     for (const title of ['Speed (km/h)', 'GPS acceleration (m/s²)', 'Heart rate (bpm)']) {
       expect(await screen.findByRole('img', { name: title })).toBeInTheDocument()
@@ -81,6 +92,50 @@ describe('SessionPage', () => {
   it('ignores a window that does not fit the session', async () => {
     renderSession({}, '/sessions/s1?from=600&to=99999')
     expect(await screen.findByRole('region', { name: 'Map' })).toHaveTextContent('window none · geozone none')
+  })
+
+  it('selects a window by brushing, shows its metrics and clears it with Escape', async () => {
+    const calls = renderSession()
+    const { router } = calls
+    await userEvent.click(await screen.findByRole('button', { name: 'brush 600–1200' }))
+
+    expect(router.state.location.search).toBe('?from=600&to=1200')
+    expect(screen.getByText('10:00–20:00')).toBeInTheDocument()
+    const metrics = within(screen.getByRole('region', { name: 'Metrics' }))
+    expect(metrics.getByRole('columnheader', { name: 'Window' })).toBeInTheDocument()
+    await vi.waitFor(() => expect(metrics.getByText('Decelerations (GPS)').parentElement).toHaveTextContent('Decelerations (GPS)314'))
+    const request = calls.find((call) => call.path === '/api/sessions/s1/metrics')!
+    expect([request.query.get('from'), request.query.get('to')]).toEqual(['600', '1200'])
+
+    await userEvent.keyboard('{Escape}')
+    expect(router.state.location.search).toBe('')
+    expect(metrics.queryByRole('columnheader', { name: 'Window' })).not.toBeInTheDocument()
+  })
+
+  it('selects a segment from the strip', async () => {
+    const { router } = renderSession()
+    await userEvent.click(await screen.findByText('Sprints'))
+    expect(router.state.location.search).toBe('?from=0&to=3900')
+  })
+
+  it('opens the drawer of a clicked effort and steps through the efforts', async () => {
+    renderSession({}, '/sessions/s1?from=600&to=1200')
+    await userEvent.click(await screen.findByRole('button', { name: 'marker e2' }))
+
+    const drawer = within(screen.getByRole('dialog', { name: 'Effort 2 of 2' }))
+    expect(drawer.getByText('0:06–0:08')).toBeInTheDocument()
+    expect(drawer.getByText('Peak speed').nextSibling).toHaveTextContent('21.6 km/h')
+    expect(drawer.getByText('Peak acceleration (GPS)').closest('tr')).toHaveAttribute('title', expect.stringContaining('1 Hz GPS'))
+    expect(await drawer.findByText('effort map')).toBeInTheDocument()
+    expect(drawer.getByRole('button', { name: 'Next' })).toBeDisabled()
+
+    await userEvent.click(drawer.getByRole('button', { name: 'Previous' }))
+    expect(screen.getByRole('dialog', { name: 'Effort 1 of 2' })).toBeInTheDocument()
+
+    // Escape closes the drawer first and keeps the window.
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByText('10:00–20:00')).toBeInTheDocument()
   })
 
   it('warns about Smart recording', async () => {

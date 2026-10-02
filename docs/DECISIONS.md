@@ -445,3 +445,30 @@ Newest entries at the bottom.
     after the charts; the chunk size warning limit is 1100 kB.
 - **Alternatives:** Esri World Imagery without a key (not allowed by its terms); `VITE_*` build-time config; fitting
   the view to track and geozone together.
+
+## 2026-10-02 — Session screen interactions (step 18)
+
+- **Context:** spec 10.2 describes the window selection, segment editing and the effort drawer; the details of input
+  handling are open.
+- **Decision:**
+  - **Brush:** every chart has a `lineX` brush, switched on with `takeGlobalCursor`, so dragging selects a window and
+    no longer pans; the wheel zooms and the slider pans. The speed chart's `brushEnd` covers all charts, as
+    `echarts.connect` repeats the brush there. Windows are whole seconds, at least one long. The URL is updated with
+    `replace`, so brushing does not fill the browser history. Clicking the chart keeps the window (`removeOnClick`
+    off); *Clear* or Escape removes it.
+  - **Window metrics:** requested 200 ms after the window last changed, cached per [from, to] by TanStack Query.
+  - **Save as segment:** drill type (optional) and label; a 409 names the segments in the way, found among the
+    session's segments, instead of the server's segment id.
+  - **Strip:** a click selects the segment's range; its edges drag (mouse events, kept between the neighbouring
+    segments, one PATCH on release); a right click opens the menu: split at the clicked time, merge with the next
+    segment (a gap between them joins it), drill type (or none), delete, and reset from laps after a browser
+    confirmation.
+  - **Escape:** closes an open menu or form first, then the effort drawer, then clears the window.
+  - **Effort drawer:** a non-modal side panel opened by clicking an effort marker; efforts in start order for
+    previous / next; the close-up chart shows speed and GPS acceleration on two axes; distances in m.
+  - Segment changes refresh the session, its efforts (their segment can change) and the drill type statistics, not
+    the series.
+  - Map lines are cut every 2 000 positions: MapLibre draws one line from at most 65 535 vertices, and a 2-hour track
+    with round joins needs more.
+- **Alternatives:** a toolbox button to switch between brushing and panning; a custom confirmation dialog; the effort
+  in the URL.

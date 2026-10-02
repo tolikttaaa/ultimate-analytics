@@ -1,11 +1,13 @@
 import type { MeanAndBest, WindowMetrics } from '../../api/types'
 import { distance, duration, pace, speedKmh } from '../../format'
 
-/** One column of the panel: the metrics of the session, of a window, ... */
+/** One column of the panel: the metrics of the session, of a window, ...; without metrics yet it shows "…". */
 export interface MetricsColumn {
   label: string
-  metrics: WindowMetrics
+  metrics?: WindowMetrics
 }
+
+const PENDING = '…'
 
 const GPS_NOTE = 'Derived from 1 Hz GPS speed: comparable between sessions recorded the same way, not a lab measurement.'
 const MISSING = '–'
@@ -83,7 +85,7 @@ const ZONE_LABELS: Record<string, string> = {
   STAND: 'Stand', WALK: 'Walk', JOG: 'Jog', RUN: 'Run', HIGH_SPEED: 'High speed', SPRINT: 'Sprint',
 }
 
-/** Metrics of one or more columns side by side (spec 10.2); step 18 adds the brushed window. */
+/** Metrics of the session and of the selected window side by side (spec 10.2). */
 export function MetricsPanel({ columns }: { columns: MetricsColumn[] }) {
   return (
     <section className="metrics-panel" aria-label="Metrics">
@@ -102,7 +104,9 @@ export function MetricsPanel({ columns }: { columns: MetricsColumn[] }) {
             {group.rows.map((row) => (
               <tr key={row.label} title={row.title}>
                 <td>{row.label}</td>
-                {columns.map((column) => <td key={column.label} className="number">{row.value(column.metrics)}</td>)}
+                {columns.map((column) => (
+                  <td key={column.label} className="number">{column.metrics ? row.value(column.metrics) : PENDING}</td>
+                ))}
               </tr>
             ))}
           </tbody>
@@ -111,12 +115,16 @@ export function MetricsPanel({ columns }: { columns: MetricsColumn[] }) {
           <tr className="group">
             <th colSpan={columns.length + 1}>Speed zones (time · distance)</th>
           </tr>
-          {columns[0].metrics.zones.map((zone, index) => (
+          {(columns[0].metrics?.zones ?? []).map((zone, index) => (
             <tr key={zone.zone}>
               <td>{ZONE_LABELS[zone.zone] ?? zone.zone}</td>
               {columns.map((column) => {
-                const own = column.metrics.zones[index]
-                return <td key={column.label} className="number">{duration(own.timeSec)} · {distance(own.distanceM)}</td>
+                const own = column.metrics?.zones[index]
+                return (
+                  <td key={column.label} className="number">
+                    {own ? `${duration(own.timeSec)} · ${distance(own.distanceM)}` : PENDING}
+                  </td>
+                )
               })}
             </tr>
           ))}

@@ -1,5 +1,5 @@
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { type LngLatBoundsLike, Map, NavigationControl, setWorkerUrl } from 'maplibre-gl'
+import { type FitBoundsOptions, type LngLatBoundsLike, Map, NavigationControl, setWorkerUrl } from 'maplibre-gl'
 // MapLibre finds its worker next to its own module, which bundling moves; Vite builds the worker and gives its URL.
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -12,6 +12,7 @@ interface Props {
   config: MapConfig
   /** The area shown first. */
   bounds?: LngLatBoundsLike
+  fitBoundsOptions?: FitBoundsOptions
   /** Adds the overlays: on load and again after every switch of the base map, which replaces the style. */
   onStyleLoad: (map: Map) => void
   /** The map once created, and null when it is gone; for updating overlay data. */
@@ -19,14 +20,14 @@ interface Props {
 }
 
 /** A MapLibre map with the configured base maps and a switch between them (spec 10.2). */
-export function MapView({ config, bounds, onStyleLoad, onMap }: Props) {
+export function MapView({ config, bounds, fitBoundsOptions = { padding: 32, maxZoom: 18 }, onStyleLoad, onMap }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<Map | null>(null)
   const [base, setBase] = useState<BaseMap>('map')
-  const latest = useRef({ onStyleLoad, onMap, bounds, base })
+  const latest = useRef({ onStyleLoad, onMap, bounds, fitBoundsOptions, base })
 
   useLayoutEffect(() => {
-    latest.current = { onStyleLoad, onMap, bounds, base }
+    latest.current = { onStyleLoad, onMap, bounds, fitBoundsOptions, base }
   })
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export function MapView({ config, bounds, onStyleLoad, onMap }: Props) {
       container: container.current!,
       style: baseMapStyle(config, latest.current.base),
       bounds: latest.current.bounds,
-      fitBoundsOptions: { padding: 32, maxZoom: 18 },
+      fitBoundsOptions: latest.current.fitBoundsOptions,
       attributionControl: { compact: true },
     })
     instance.addControl(new NavigationControl({ showCompass: false }), 'top-left')

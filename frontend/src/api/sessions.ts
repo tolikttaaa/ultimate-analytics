@@ -19,6 +19,7 @@ export const sessionKeys = {
   detail: (id: string) => [...sessionKeys.all, 'detail', id] as const,
   series: (id: string) => [...sessionKeys.all, 'series', id] as const,
   efforts: (id: string) => [...sessionKeys.all, 'efforts', id] as const,
+  metrics: (id: string, from: number, to: number) => [...sessionKeys.all, 'metrics', id, from, to] as const,
 }
 
 /** GET /api/sessions */
@@ -82,5 +83,15 @@ export function useRecomputeSession() {
   return useMutation({
     mutationFn: (id: string) => unwrap(api.POST('/api/sessions/{id}/recompute', { params: { path: { id } } })),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: sessionKeys.all }),
+  })
+}
+
+/** GET /api/sessions/{id}/metrics?from&to: metrics of a window (spec 6.5); disabled without a window. */
+export function useWindowMetrics(id: string, window: [number, number] | null) {
+  const [from, to] = window ?? [0, 0]
+  return useQuery({
+    queryKey: sessionKeys.metrics(id, from, to),
+    queryFn: () => unwrap(api.GET('/api/sessions/{id}/metrics', { params: { path: { id }, query: { from, to } } })),
+    enabled: window !== null,
   })
 }

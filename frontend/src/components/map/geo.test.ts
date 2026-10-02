@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { effort } from '../../test/data'
-import { cursorPoint, effortStarts, geozoneOutline, positionAt, trackBounds, trackLines } from './geo'
+import { cursorPoint, effortStarts, geozoneOutline, MAX_LINE_POSITIONS, positionAt, trackBounds, trackLines } from './geo'
 
 /** Six seconds heading east, with a gap at t = 3. */
 const series = {
@@ -15,6 +15,15 @@ describe('trackLines', () => {
       [[33.1, 34.7], [33.1001, 34.7], [33.1002, 34.7]],
       [[33.1004, 34.7], [33.1005, 34.7001]],
     ])
+  })
+
+  it('cuts long runs into lines MapLibre can draw, without breaking the track', () => {
+    const count = MAX_LINE_POSITIONS * 2 + 10
+    const long = { t: [...Array(count).keys()], lat: Array(count).fill(34.7), lon: [...Array(count).keys()].map((i) => 33 + i / 1e5) }
+    const lines = trackLines(long).geometry.coordinates
+    expect(lines.map((line) => line.length)).toEqual([MAX_LINE_POSITIONS, MAX_LINE_POSITIONS, 12])
+    expect(lines[1][0]).toEqual(lines[0][MAX_LINE_POSITIONS - 1])
+    expect(lines.flat().length - (lines.length - 1)).toBe(count)
   })
 
   it('draws a window from the position at its start to the one at its end', () => {

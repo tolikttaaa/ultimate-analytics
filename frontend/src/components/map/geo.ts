@@ -10,6 +10,11 @@ type Track = Pick<SessionSeries, 't' | 'lat' | 'lon'>
 
 const EARTH_RADIUS_M = 6_371_008.8
 const CIRCLE_VERTICES = 64
+/**
+ * MapLibre draws a line from at most 65 535 vertices, and a round-joined GPS line takes about ten per position; longer
+ * runs are cut into lines of this many positions, each starting where the previous one ended.
+ */
+export const MAX_LINE_POSITIONS = 2000
 
 function positionOf(series: Track, index: number): Position | null {
   const lat = series.lat[index]
@@ -35,6 +40,10 @@ export function trackLines(series: Track, from = -Infinity, to = Infinity): Feat
     const position = positionOf(series, index)
     if (position) {
       current.push(position)
+      if (current.length === MAX_LINE_POSITIONS) {
+        lines.push(current)
+        current = [position]
+      }
     } else {
       if (current.length > 1) lines.push(current)
       current = []
@@ -66,11 +75,11 @@ export function cursorPoint(series: Track, t: number | null): FeatureCollection<
   }
 }
 
-/** South-west and north-east corners of the track, or null without positions. */
-export function trackBounds(series: Track): [Position, Position] | null {
+/** South-west and north-east corners of the track between `from` and `to`, or null without positions. */
+export function trackBounds(series: Track, from = -Infinity, to = Infinity): [Position, Position] | null {
   let bounds: [Position, Position] | null = null
-  series.t.forEach((_, index) => {
-    const position = positionOf(series, index)
+  series.t.forEach((t, index) => {
+    const position = t >= from && t <= to ? positionOf(series, index) : null
     if (!position) return
     const [lon, lat] = position
     if (!bounds) bounds = [[lon, lat], [lon, lat]]

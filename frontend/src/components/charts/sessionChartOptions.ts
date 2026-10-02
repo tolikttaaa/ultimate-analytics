@@ -88,6 +88,16 @@ function baseOption(lastT: number, title: string, unit: string, decimals: number
       splitLine: { show: false },
     },
     yAxis: { type: 'value', splitNumber: 3, axisLabel: { formatter: (v: number) => `${v}` } },
+    // Dragging selects a window (spec 10.2); the wheel and the slider zoom.
+    brush: {
+      xAxisIndex: 'all',
+      brushType: 'lineX',
+      brushMode: 'single',
+      transformable: false,
+      removeOnClick: false,
+      brushStyle: { borderWidth: 1, color: 'rgba(21, 101, 192, 0.12)', borderColor: 'rgba(21, 101, 192, 0.7)' },
+      outOfBrush: { colorAlpha: 1 },
+    },
     dataZoom: [
       { type: 'inside', xAxisIndex: 0, filterMode: 'none' },
       ...(withSlider ? [{ type: 'slider', xAxisIndex: 0, filterMode: 'none', height: 18, bottom: 8 }] : []),
@@ -163,7 +173,8 @@ export function speedChartOption({ series, efforts, segments, drillTypes, lastT 
           data: markers,
         },
       },
-      line('Recorded speed', recordedSpeedPoints(series), COLORS.recorded, 1, 0.5),
+      // Under the smoothed speed, which it would otherwise wash out.
+      { ...line('Recorded speed', recordedSpeedPoints(series), COLORS.recorded, 1, 0.5), z: 1 },
     ],
   }
 }
@@ -182,6 +193,29 @@ export function zoomedRange(option: unknown, lastT: number): [number, number] {
   return [((zoom?.start ?? 0) / 100) * lastT, ((zoom?.end ?? 100) / 100) * lastT]
 }
 
+/**
+ * The window of a `brushEnd` event in whole seconds inside the session, or null when the brush was removed or covers
+ * less than a second.
+ */
+export function brushedWindow(event: unknown, lastT: number): [number, number] | null {
+  const range = (event as { areas?: { coordRange?: number[] }[] }).areas?.[0]?.coordRange
+  if (!range || range.length < 2) return null
+  const from = Math.max(0, Math.round(Math.min(range[0], range[1])))
+  const to = Math.min(lastT, Math.round(Math.max(range[0], range[1])))
+  return to - from >= 1 ? [from, to] : null
+}
+
+/** The brush areas showing a window on the charts. */
+export function brushAreas(window: [number, number] | null) {
+  return window ? [{ brushType: 'lineX', xAxisIndex: 0, coordRange: window }] : []
+}
+
+/** The effort id of a click on an effort marker, else null. */
+export function clickedEffort(event: unknown): string | null {
+  const click = event as { componentType?: string; data?: { effortId?: string } }
+  return click.componentType === 'markPoint' ? click.data?.effortId ?? null : null
+}
+
 /** The t of an `updateAxisPointer` event, or null when the pointer left the charts. */
 export function pointerTime(event: unknown): number | null {
   const value = (event as { axesInfo?: { value?: number }[] }).axesInfo?.[0]?.value
@@ -194,5 +228,47 @@ export function heartRateChartOption(series: SessionSeries, lastT: number): ECha
     ...baseOption(lastT, 'Heart rate (bpm)', 'bpm', 0, true),
     yAxis: { type: 'value', splitNumber: 3, scale: true },
     series: [line('Heart rate', points(series.t, series.hr), COLORS.hr, 1.2)],
+  }
+}
+
+/**
+ * The close-up of one effort in its drawer (spec 10.2): speed and GPS acceleration from 3 s before its start to 3 s
+ * after its end, with the effort shaded.
+ */
+export function effortChartOption(series: SessionSeries, effort: Effort): EChartsCoreOption {
+  const from = Math.max(series.t[0] ?? 0, effort.startT - 3)
+  const to = Math.min(series.t[series.t.length - 1] ?? 0, effort.endT + 3)
+  const inRange = (data: [number, number | null][]) => data.filter(([t]) => t >= from && t <= to)
+  const units: Record<string, [string, number]> = { Speed: ['km/h', 1], 'GPS acceleration': ['m/s²', 2] }
+  return {
+    animation: false,
+    grid: { left: 44, right: 44, top: 30, bottom: 26 },
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params: unknown) => {
+        const items = params as { axisValue: number; seriesName: string; marker: string; value: [number, number | null] }[]
+        const lines = items
+          .filter((item) => item.value[1] != null)
+          .map((item) => {
+            const [unit, decimals] = units[item.seriesName]
+            return `${item.marker}${item.seriesName}: <b>${(item.value[1] as number).toFixed(decimals)} ${unit}</b>`
+          })
+        return [duration(items[0]?.axisValue), ...lines].join('<br/>')
+      },
+    },
+    xAxis: { type: 'value', min: from, max: to, minInterval: 1, axisLabel: { formatter: (t: number) => duration(t), hideOverlap: true } },
+    yAxis: [
+      { type: 'value', name: 'km/h', nameTextStyle: { color: COLORS.speed }, splitNumber: 3 },
+      { type: 'value', name: 'm/s² (GPS)', nameTextStyle: { color: COLORS.accel }, splitNumber: 3, splitLine: { show: false } },
+    ],
+    series: [
+      {
+        ...line('Speed', inRange(points(series.t, series.speed, MPS_TO_KMH)), COLORS.speed, 2),
+        showSymbol: true,
+        symbolSize: 4,
+        markArea: { silent: true, data: [[{ xAxis: effort.startT, itemStyle: { color: 'rgba(245, 124, 0, 0.1)' } }, { xAxis: effort.endT }]] },
+      },
+      { ...line('GPS acceleration', inRange(points(series.t, series.accel)), COLORS.accel, 1.5), yAxisIndex: 1 },
+    ],
   }
 }

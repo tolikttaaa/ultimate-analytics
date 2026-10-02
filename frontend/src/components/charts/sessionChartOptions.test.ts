@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { drillType, effort, segment, sessionSeries } from '../../test/data'
 import {
   accelChartOption,
+  brushAreas,
+  brushedWindow,
+  clickedEffort,
+  effortChartOption,
   heartRateChartOption,
   pauseRanges,
   pointerTime,
@@ -148,5 +152,60 @@ describe('pointerTime', () => {
   it('reads t from an axis pointer event, or null when the pointer left', () => {
     expect(pointerTime({ axesInfo: [{ axisDim: 'x', axisIndex: 0, value: 754.6 }] })).toBe(755)
     expect(pointerTime({ axesInfo: [] })).toBeNull()
+  })
+})
+
+describe('window selection', () => {
+  it('brushes along the time axis of every chart without panning', () => {
+    const option = accelChartOption(sessionSeries(), 9) as { brush: Record<string, unknown> }
+    expect(option.brush).toMatchObject({ xAxisIndex: 'all', brushType: 'lineX', brushMode: 'single', removeOnClick: false })
+  })
+
+  it('turns a brush into whole seconds inside the session', () => {
+    expect(brushedWindow({ areas: [{ coordRange: [600.4, 1199.6] }] }, 1800)).toEqual([600, 1200])
+    expect(brushedWindow({ areas: [{ coordRange: [1700, -20] }] }, 1500)).toEqual([0, 1500])
+  })
+
+  it('ignores a removed or too short brush', () => {
+    expect(brushedWindow({ areas: [] }, 1800)).toBeNull()
+    expect(brushedWindow({ areas: [{ coordRange: [600.2, 600.4] }] }, 1800)).toBeNull()
+  })
+
+  it('draws a window as a brush area, and none as no areas', () => {
+    expect(brushAreas([600, 1200])).toEqual([{ brushType: 'lineX', xAxisIndex: 0, coordRange: [600, 1200] }])
+    expect(brushAreas(null)).toEqual([])
+  })
+})
+
+describe('clickedEffort', () => {
+  it('reads the effort of a clicked marker only', () => {
+    expect(clickedEffort({ componentType: 'markPoint', data: { effortId: 'e1' } })).toBe('e1')
+    expect(clickedEffort({ componentType: 'series', data: [3, 21] })).toBeNull()
+  })
+})
+
+describe('effortChartOption', () => {
+  const option = effortChartOption(sessionSeries(), effort({ startT: 4, endT: 5 })) as unknown as Option & {
+    yAxis: { name: string }[]
+    series: (Series & { yAxisIndex?: number })[]
+  }
+
+  it('shows 3 s around the effort, clipped to the session', () => {
+    expect(option.xAxis).toMatchObject({ min: 1, max: 8 })
+    expect(option.series[0].data.map(([t]) => t)).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
+    expect(option.series[0].data[2]).toEqual([3, 21.6])
+  })
+
+  it('plots GPS acceleration on its own axis and shades the effort', () => {
+    expect(option.yAxis.map((axis) => axis.name)).toEqual(['km/h', 'm/s² (GPS)'])
+    expect(option.series[1]).toMatchObject({ name: 'GPS acceleration', yAxisIndex: 1 })
+    expect(option.series[0].markArea!.data[0].map((item) => item.xAxis)).toEqual([4, 5])
+  })
+
+  it('gives each value its unit in the tooltip', () => {
+    expect(option.tooltip.formatter([
+      { axisValue: 4, seriesName: 'Speed', marker: '•', value: [4, 14.4] },
+      { axisValue: 4, seriesName: 'GPS acceleration', marker: '•', value: [4, -2] },
+    ])).toBe('0:04<br/>•Speed: <b>14.4 km/h</b><br/>•GPS acceleration: <b>-2.00 m/s²</b>')
   })
 })
