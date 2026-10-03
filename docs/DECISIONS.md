@@ -546,3 +546,15 @@ Newest entries at the bottom.
   - Map controls sit at the top, next to the zoom buttons: on the narrow session map the attribution covers the
     bottom.
 - **Alternatives:** following the charts' zoom (not chosen by the user); hiding the window halo in window-only mode.
+
+## 2026-10-03 — Rest and active periods on the charts (backlog)
+
+- **Context:** backlog: show rest and active periods clearly; pauses were shaded on the speed chart only, at 7 %.
+- **Decision:**
+  - Rest (pauses, spec 6.3) is shaded on all three charts at 15 % grey; the tooltip names the activity of the
+    hovered second (`50:43, rest`, `active` or `no data`).
+  - An *Activity* band under the segment strip shows active time (dark), rest (light) and gaps (hatched), follows
+    the zoom and selects a run as the window on click. Both strips carry a label in the charts' left margin; a
+    legend explains the band.
+  - One run model (`activityRuns`) feeds the shading, the tooltip and the band.
+- **Alternatives:** shading active time instead of rest; a separate rest/active chart.

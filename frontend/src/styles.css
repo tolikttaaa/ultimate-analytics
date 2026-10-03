@@ -870,3 +870,81 @@ input {
   background: var(--color-accent);
   color: #fff;
 }
+
+/* Strips above the charts: a label in the charts' left margin, the strip over their plot width. */
+.strip-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.strip-label {
+  flex: none;
+  width: 64px;
+  padding-right: 8px;
+  color: var(--color-muted);
+  font-size: 11px;
+  text-align: right;
+}
+
+.strip-row .segment-strip,
+.strip-row .activity-strip {
+  flex: 1;
+}
+
+.activity-strip {
+  position: relative;
+  overflow: hidden;
+  height: 10px;
+  margin: 2px 0 4px;
+  border-radius: 3px;
+}
+
+.activity-run {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  cursor: pointer;
+}
+
+.activity-run.active {
+  background: #3d4752;
+}
+
+.activity-run.rest {
+  background: #d5dae0;
+}
+
+.activity-run.gap {
+  background: repeating-linear-gradient(135deg, transparent 0 3px, #d5dae0 3px 5px);
+}
+
+.activity-run:hover {
+  outline: 1px solid var(--color-accent);
+}
+
+.activity-legend {
+  position: absolute;
+  right: 24px;
+  bottom: -16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-muted);
+  font-size: 11px;
+}
+
+.legend-swatch {
+  width: 10px;
+  height: 8px;
+  margin-left: 8px;
+  border-radius: 2px;
+}
+
+.legend-swatch.active {
+  background: #3d4752;
+}
+
+.legend-swatch.rest {
+  background: #d5dae0;
+}

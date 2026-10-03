@@ -7,6 +7,7 @@ import { useGeozones } from '../../api/geozones'
 import { useEfforts, useSession, useSessionSeries, useWindowMetrics } from '../../api/sessions'
 import { SessionCharts } from '../../components/charts/SessionCharts'
 import { useDebouncedValue } from '../../useDebouncedValue'
+import { ActivityStrip } from './ActivityStrip'
 import { createCursor } from './cursor'
 import { EffortDrawer } from './EffortDrawer'
 import { type MetricsColumn, MetricsPanel } from './MetricsPanel'
@@ -89,6 +90,7 @@ export function SessionPage() {
             selection={selection}
             onSelect={setSelection}
           />
+          {series.data && <ActivityStrip series={series.data} view={view ?? [0, lastT]} onSelect={setSelection} />}
           <WindowBar
             sessionId={id}
             selection={selection}

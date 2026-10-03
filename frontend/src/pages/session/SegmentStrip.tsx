@@ -92,10 +92,12 @@ export function SegmentStrip({ sessionId, segments, drillTypes, view: [from, to]
 
   return (
     <>
+      <div className="strip-row">
+      <span className="strip-label">Segments</span>
       <div
         ref={strip}
         className="segment-strip"
-        style={{ marginLeft: PLOT_MARGIN.left, marginRight: PLOT_MARGIN.right }}
+        style={{ marginRight: PLOT_MARGIN.right }}
         aria-label="Segments"
         onContextMenu={openMenu}
       >
@@ -120,6 +122,7 @@ export function SegmentStrip({ sessionId, segments, drillTypes, view: [from, to]
             </div>
           )
         })}
+      </div>
       </div>
       {failed && <p role="alert" className="error strip-error">{failed.error?.message}</p>}
       {menu && (

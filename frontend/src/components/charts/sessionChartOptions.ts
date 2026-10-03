@@ -11,7 +11,7 @@ import { duration, speedKmh } from '../../format'
 export const PLOT_MARGIN = { left: 64, right: 24 }
 
 const MPS_TO_KMH = 3.6
-const COLORS = { speed: '#1565c0', recorded: '#8c959f', accel: '#6a1b9a', hr: '#c62828', pause: 'rgba(31, 35, 40, 0.07)' }
+const COLORS = { speed: '#1565c0', recorded: '#8c959f', accel: '#6a1b9a', hr: '#c62828', rest: 'rgba(110, 118, 129, 0.15)' }
 const UNTYPED_SEGMENT = '#90a4ae'
 
 type Value = number | null | undefined
@@ -35,20 +35,37 @@ export function recordedSpeedPoints(series: Pick<SessionSeries, 't' | 'speed' | 
   return result
 }
 
-/** Pauses as [from, to) ranges of t: runs of seconds with `inPause`; a gap ends a run. */
-export function pauseRanges(series: Pick<SessionSeries, 't' | 'inPause'>): [number, number][] {
-  const ranges: [number, number][] = []
-  let start: number | null = null
+export type Activity = 'active' | 'rest' | 'gap'
+
+/** A run of seconds in one state, [from, to) in t. */
+export interface ActivityRun {
+  state: Activity
+  from: number
+  to: number
+}
+
+const activityOf = (inPause: boolean | null | undefined): Activity => (inPause == null ? 'gap' : inPause ? 'rest' : 'active')
+
+/** The session as runs of active time, rest (pauses, spec 6.3) and gaps without data. */
+export function activityRuns(series: Pick<SessionSeries, 't' | 'inPause'>): ActivityRun[] {
+  const runs: ActivityRun[] = []
   series.t.forEach((t, i) => {
-    const paused = series.inPause[i] === true
-    if (paused && start === null) start = t
-    if (!paused && start !== null) {
-      ranges.push([start, t])
-      start = null
-    }
+    const state = activityOf(series.inPause[i])
+    const last = runs[runs.length - 1]
+    if (last?.state === state) last.to = t + 1
+    else runs.push({ state, from: t, to: t + 1 })
   })
-  if (start !== null) ranges.push([start, series.t[series.t.length - 1] + 1])
-  return ranges
+  return runs
+}
+
+/** Pauses as [from, to) ranges of t; a gap ends a pause. */
+export function pauseRanges(series: Pick<SessionSeries, 't' | 'inPause'>): [number, number][] {
+  return activityRuns(series).filter((run) => run.state === 'rest').map((run) => [run.from, run.to])
+}
+
+/** Rest shading for a chart's markArea. */
+function restAreas(series: Pick<SessionSeries, 't' | 'inPause'>) {
+  return pauseRanges(series).map(([from, to]) => [{ xAxis: from, itemStyle: { color: COLORS.rest } }, { xAxis: to }])
 }
 
 /** Colour of a segment: its drill type's, or neutral when untyped. */
@@ -61,25 +78,38 @@ export function segmentLabel(segment: Segment, drillTypes: DrillType[]): string 
   return segment.label ?? drillTypes.find((type) => type.id === segment.drillTypeId)?.name ?? 'Segment'
 }
 
-function tooltipFormatter(unit: string, decimals: number) {
+const ACTIVITY_NAMES: Record<Activity, string> = { active: 'active', rest: 'rest', gap: 'no data' }
+
+/** The time and its activity, then the values of this very second. */
+function tooltipFormatter(series: Pick<SessionSeries, 't' | 'inPause'>, unit: string, decimals: number) {
   return (params: unknown) => {
     const items = params as { axisValue: number; seriesName: string; marker: string; value: [number, number | null] }[]
     if (items.length === 0) return ''
     // Only values of this very second: the nearest recorded sample may be seconds away.
     const t = Math.round(items[0].axisValue)
+    const activity = activityOf(series.inPause[t - (series.t[0] ?? 0)])
     const lines = items
       .filter((item) => item.value[1] != null && item.value[0] === t)
       .map((item) => `${item.marker}${item.seriesName}: <b>${(item.value[1] as number).toFixed(decimals)} ${unit}</b>`)
-    return [duration(t), ...lines].join('<br/>')
+    return [`${duration(t)}, ${ACTIVITY_NAMES[activity]}`, ...lines].join('<br/>')
   }
 }
 
-function baseOption(lastT: number, title: string, unit: string, decimals: number, withSlider: boolean): EChartsCoreOption {
+interface BaseOptions {
+  series: Pick<SessionSeries, 't' | 'inPause'>
+  lastT: number
+  title: string
+  unit: string
+  decimals: number
+  withSlider: boolean
+}
+
+function baseOption({ series, lastT, title, unit, decimals, withSlider }: BaseOptions): EChartsCoreOption {
   return {
     animation: false,
     title: { text: title, left: PLOT_MARGIN.left, top: 0, textStyle: { fontSize: 12, fontWeight: 600, color: '#59636e' } },
     grid: { ...PLOT_MARGIN, top: 24, bottom: withSlider ? 56 : 22 },
-    tooltip: { trigger: 'axis', axisPointer: { type: 'line' }, formatter: tooltipFormatter(unit, decimals) },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'line' }, formatter: tooltipFormatter(series, unit, decimals) },
     xAxis: {
       type: 'value',
       min: 0,
@@ -129,14 +159,10 @@ export interface SpeedChartData {
 }
 
 /**
- * Smoothed speed with the recorded speed as a faint line, pauses shaded grey, segments as bands in their drill type's
+ * Smoothed speed with the recorded speed as a faint line, rest shaded grey, segments as bands in their drill type's
  * colour, and a marker at the peak of every effort (spec 10.2).
  */
 export function speedChartOption({ series, efforts, segments, drillTypes, lastT }: SpeedChartData): EChartsCoreOption {
-  const pauses = pauseRanges(series).map(([from, to]) => [
-    { xAxis: from, itemStyle: { color: COLORS.pause } },
-    { xAxis: to },
-  ])
   const bands = segments.map((segment) => [
     {
       name: segmentLabel(segment, drillTypes),
@@ -154,11 +180,11 @@ export function speedChartOption({ series, efforts, segments, drillTypes, lastT 
     meanSpeedFirst3s: effort.metrics.meanSpeedFirst3s,
   }))
   return {
-    ...baseOption(lastT, 'Speed (km/h)', 'km/h', 1, false),
+    ...baseOption({ series, lastT, title: 'Speed (km/h)', unit: 'km/h', decimals: 1, withSlider: false }),
     series: [
       {
         ...line('Speed', points(series.t, series.speed, MPS_TO_KMH), COLORS.speed),
-        markArea: { silent: true, data: [...pauses, ...bands] },
+        markArea: { silent: true, data: [...restAreas(series), ...bands] },
         markPoint: {
           symbol: 'circle',
           symbolSize: 9,
@@ -182,8 +208,8 @@ export function speedChartOption({ series, efforts, segments, drillTypes, lastT 
 /** GPS acceleration, derived from 1 Hz speed: a comparative indicator only (spec 4.3). */
 export function accelChartOption(series: SessionSeries, lastT: number): EChartsCoreOption {
   return {
-    ...baseOption(lastT, 'GPS acceleration (m/s²)', 'm/s²', 2, false),
-    series: [line('GPS acceleration', points(series.t, series.accel), COLORS.accel, 1.2)],
+    ...baseOption({ series, lastT, title: 'GPS acceleration (m/s²)', unit: 'm/s²', decimals: 2, withSlider: false }),
+    series: [{ ...line('GPS acceleration', points(series.t, series.accel), COLORS.accel, 1.2), markArea: { silent: true, data: restAreas(series) } }],
   }
 }
 
@@ -225,9 +251,9 @@ export function pointerTime(event: unknown): number | null {
 /** Heart rate; carries the zoom slider of the whole group. */
 export function heartRateChartOption(series: SessionSeries, lastT: number): EChartsCoreOption {
   return {
-    ...baseOption(lastT, 'Heart rate (bpm)', 'bpm', 0, true),
+    ...baseOption({ series, lastT, title: 'Heart rate (bpm)', unit: 'bpm', decimals: 0, withSlider: true }),
     yAxis: { type: 'value', splitNumber: 3, scale: true },
-    series: [line('Heart rate', points(series.t, series.hr), COLORS.hr, 1.2)],
+    series: [{ ...line('Heart rate', points(series.t, series.hr), COLORS.hr, 1.2), markArea: { silent: true, data: restAreas(series) } }],
   }
 }
 

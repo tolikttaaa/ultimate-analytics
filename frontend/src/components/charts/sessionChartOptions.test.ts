@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { drillType, effort, segment, sessionSeries } from '../../test/data'
 import {
   accelChartOption,
+  activityRuns,
   brushAreas,
   brushedWindow,
   clickedEffort,
@@ -53,6 +54,17 @@ describe('pauseRanges', () => {
   })
 })
 
+describe('activityRuns', () => {
+  it('splits the session into active, rest and gap runs', () => {
+    expect(activityRuns(sessionSeries())).toEqual([
+      { state: 'active', from: 0, to: 6 },
+      { state: 'rest', from: 6, to: 8 },
+      { state: 'gap', from: 8, to: 9 },
+      { state: 'active', from: 9, to: 10 },
+    ])
+  })
+})
+
 describe('segments', () => {
   const types = [drillType()]
 
@@ -94,7 +106,7 @@ describe('speedChartOption', () => {
   it('shades pauses and colours segments by drill type', () => {
     const areas = speed.markArea!.data.map(([from, to]) => [from.xAxis, to.xAxis, from.name, from.itemStyle?.color])
     expect(areas).toEqual([
-      [6, 8, undefined, 'rgba(31, 35, 40, 0.07)'],
+      [6, 8, undefined, 'rgba(110, 118, 129, 0.15)'],
       [0, 6, 'Sprints', '#e65100'],
     ])
   })
@@ -108,13 +120,12 @@ describe('speedChartOption', () => {
     )
   })
 
-  it('lists the values of the cursor second, skipping gaps and samples of other seconds', () => {
-    const at = (seriesName: string, t: number, value: number | null) => ({ axisValue: 125, seriesName, marker: '•', value: [t, value] })
-    expect(option.tooltip.formatter([at('Speed', 125, 21.64), at('Recorded speed', 125, 22.1)]))
-      .toBe('2:05<br/>•Speed: <b>21.6 km/h</b><br/>•Recorded speed: <b>22.1 km/h</b>')
-    expect(option.tooltip.formatter([at('Speed', 125, 21.64), at('Recorded speed', 122, 20)]))
-      .toBe('2:05<br/>•Speed: <b>21.6 km/h</b>')
-    expect(option.tooltip.formatter([at('Speed', 125, null)])).toBe('2:05')
+  it('names the activity of the cursor second and lists its values, skipping gaps and other seconds', () => {
+    const at = (t: number, seriesName: string, sampleT: number, value: number | null) => ({ axisValue: t, seriesName, marker: '•', value: [sampleT, value] })
+    expect(option.tooltip.formatter([at(3, 'Speed', 3, 21.6), at(3, 'Recorded speed', 3, 22.32)]))
+      .toBe('0:03, active<br/>•Speed: <b>21.6 km/h</b><br/>•Recorded speed: <b>22.3 km/h</b>')
+    expect(option.tooltip.formatter([at(6, 'Speed', 6, 0), at(6, 'Recorded speed', 5, 7.6)])).toBe('0:06, rest<br/>•Speed: <b>0.0 km/h</b>')
+    expect(option.tooltip.formatter([at(8, 'Speed', 8, null)])).toBe('0:08, no data')
   })
 })
 
@@ -133,6 +144,13 @@ describe('acceleration and heart rate charts', () => {
     expect(heartRate.series[0].data[8]).toEqual([8, null])
     expect(accel.xAxis.max).toBe(9)
     expect(heartRate.xAxis.max).toBe(9)
+  })
+
+  it('shade rest like the speed chart', () => {
+    for (const option of [accelChartOption(sessionSeries(), 9), heartRateChartOption(sessionSeries(), 9)]) {
+      const areas = asOption(option).series[0].markArea!.data.map(([from, to]) => [from.xAxis, to.xAxis])
+      expect(areas).toEqual([[6, 8]])
+    }
   })
 
   it('put the zoom slider under the bottom chart only', () => {
