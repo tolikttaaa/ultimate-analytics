@@ -577,3 +577,21 @@ Newest entries at the bottom.
   not deleted. After a delete, every session query is refreshed except those of the deleted sessions: refetched they
   fail, and the session screen would show "does not exist" instead of navigating away.
 - **Alternatives:** a batch delete endpoint (not needed for a handful of sessions); selection across pages.
+
+## 2026-10-03 — Saving over segments, no segment for a single lap (backlog, spec changed)
+
+- **Context:** *Save as segment* failed on every session: each FIT lap became a segment, laps cover the whole
+  session, and segments must not overlap (409). The user chose both proposed fixes and approved changing the spec
+  (sections 6.1 step 10, 9.1 and 10.2 updated).
+- **Decision:**
+  - `POST /api/sessions/{id}/segments?overwrite=true` cuts the new segment's time out of the segments it overlaps, in
+    the same transaction: a segment around it is split (the first part keeps its id), one it reaches into is
+    shortened, a covered one is removed; leftovers shorter than 10 s are removed too. Parts that changed bounds
+    become MANUAL and lose their cached metrics; efforts are re-attributed. Without `overwrite` an overlap is still a
+    409.
+  - The UI always saves with `overwrite=true`; the form lists beforehand what happens to each segment in the way
+    ("Lap 1 is split around it").
+  - Import and *Reset from laps* create no segment from a single lap: it is the whole session and says nothing about
+    drills. Sessions imported before keep their lap segment; saving over it now works.
+  - The smoke test saves the window directly again.
+- **Alternatives:** removing existing single-lap segments with a migration (it would change user data).

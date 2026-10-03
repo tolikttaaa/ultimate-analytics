@@ -11,13 +11,21 @@ import java.util.UUID
 class DrillTypeApiTest : IntegrationTest() {
 
     private val march = "22296100401_ACTIVITY.fit" // laps [0, 3994] and [3994, 7800]
-    private val september = "24557963847_ACTIVITY.fit" // one lap [0, 6566]
+    private val september = "24557963847_ACTIVITY.fit" // one lap [0, 6566], so no segment
 
     private fun create(code: String, name: String = code, color: String = "#2E7D32", kind: String = "DRILL") =
         call(HttpMethod.POST, "/api/drill-types", mapOf("code" to code, "name" to name, "color" to color, "kind" to kind))
 
+    /** Types the first segment; a session without segments (a single lap) gets one over all of it. */
     private fun typeFirstSegment(sessionId: UUID, drillTypeId: String): String {
-        val segmentId = get("/api/sessions/$sessionId").json["segments"][0]["id"].asString()
+        val session = get("/api/sessions/$sessionId").json
+        val first = session["segments"].values().firstOrNull()
+            ?: return call(
+                HttpMethod.POST,
+                "/api/sessions/$sessionId/segments",
+                mapOf("startT" to 0, "endT" to session["elapsedSec"].asInt(), "drillTypeId" to drillTypeId),
+            ).json["id"].asString()
+        val segmentId = first["id"].asString()
         call(HttpMethod.PATCH, "/api/sessions/$sessionId/segments/$segmentId", mapOf("drillTypeId" to drillTypeId))
         return segmentId
     }

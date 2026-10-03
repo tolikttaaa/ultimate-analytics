@@ -21,10 +21,10 @@ function useSegmentMutation<T>(sessionId: string, call: (path: { id: string }, i
   })
 }
 
-/** POST /api/sessions/{id}/segments; 409 when it overlaps another segment. */
+/** POST /api/sessions/{id}/segments?overwrite=true: the new segment takes its time from the segments it overlaps. */
 export const useCreateSegment = (sessionId: string) =>
   useSegmentMutation(sessionId, (path, body: Schemas['SegmentCreate']) =>
-    unwrap(api.POST('/api/sessions/{id}/segments', { params: { path }, body })))
+    unwrap(api.POST('/api/sessions/{id}/segments', { params: { path, query: { overwrite: true } }, body })))
 
 /** PATCH a segment: absent fields stay, null clears drill type or label; 409 on overlap. */
 export const useUpdateSegment = (sessionId: string) =>

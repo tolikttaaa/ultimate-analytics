@@ -8,9 +8,11 @@ import java.util.UUID
 
 /**
  * The initial segments of a session (spec 6.1 step 10): one per watch lap, labelled "Lap n". Laps shorter than
- * [Segment.MIN_DURATION_SEC] or overlapping an earlier lap are skipped, so the segments keep their invariants.
+ * [Segment.MIN_DURATION_SEC] or overlapping an earlier lap are skipped, so the segments keep their invariants. A
+ * single lap is the whole session and says nothing about drills: it gives no segment.
  */
 fun segmentsFromLaps(sessionId: UUID, laps: List<Lap>, newId: () -> UUID = UUID::randomUUID): List<Segment> {
+    if (laps.size < 2) return emptyList()
     val segments = mutableListOf<Segment>()
     for (lap in laps.sortedBy { it.range.fromT }) {
         if (lap.range.durationSec < Segment.MIN_DURATION_SEC) continue

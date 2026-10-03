@@ -130,4 +130,56 @@ class SegmentApiTest : IntegrationTest() {
 
         get("/api/sessions/$id/segments/$lap2/metrics").json shouldBe get("/api/sessions/$id/metrics?from=3994&to=7800").json
     }
+
+    @Test
+    fun `overwriting splits a segment around the new one`() {
+        val (id) = uploadGolden(march)
+        val (lap1, lap2) = segments(id).map { it["id"].asString() }
+
+        val created = post("/api/sessions/$id/segments?overwrite=true", mapOf("startT" to 600, "endT" to 1200, "label" to "Cutting"))
+
+        created.statusCode shouldBe HttpStatus.CREATED
+        segments(id).map { listOf(it.range(), it["label"].asString(), it["source"].asString()) } shouldBe listOf(
+            listOf(0 to 600, "Lap 1", "MANUAL"),
+            listOf(600 to 1200, "Cutting", "MANUAL"),
+            listOf(1200 to 3994, "Lap 1", "MANUAL"),
+            listOf(3994 to 7800, "Lap 2", "LAP"),
+        )
+        segments(id)[0]["id"].asString() shouldBe lap1
+        segments(id).last()["id"].asString() shouldBe lap2
+        effortsFollowSegments(id)
+    }
+
+    @Test
+    fun `overwriting trims the segments at both ends and drops slivers`() {
+        val (id) = uploadGolden(march)
+
+        post("/api/sessions/$id/segments?overwrite=true", mapOf("startT" to 3000, "endT" to 5000)).statusCode shouldBe HttpStatus.CREATED
+        segments(id).map { it.range() } shouldBe listOf(0 to 3000, 3000 to 5000, 5000 to 7800)
+
+        // 0..5 would be left of the first segment: shorter than 10 s, so it goes.
+        post("/api/sessions/$id/segments?overwrite=true", mapOf("startT" to 5, "endT" to 3000)).statusCode shouldBe HttpStatus.CREATED
+        segments(id).map { it.range() } shouldBe listOf(5 to 3000, 3000 to 5000, 5000 to 7800)
+        effortsFollowSegments(id)
+    }
+
+    @Test
+    fun `overwriting removes covered segments, and without it an overlap is still a conflict`() {
+        val (id) = uploadGolden(march)
+
+        post("/api/sessions/$id/segments", mapOf("startT" to 0, "endT" to 7800)).statusCode shouldBe HttpStatus.CONFLICT
+        post("/api/sessions/$id/segments?overwrite=true", mapOf("startT" to 0, "endT" to 7800, "label" to "Everything"))
+
+        segments(id).map { it.range() to it["label"].asString() } shouldBe listOf((0 to 7800) to "Everything")
+        effortsFollowSegments(id)
+    }
+
+    @Test
+    fun `a session with a single lap starts without segments`() {
+        val (id) = uploadGolden("24557963847_ACTIVITY.fit")
+
+        segments(id) shouldBe emptyList()
+        post("/api/sessions/$id/segments/reset-from-laps?confirm=true").json.values().toList() shouldBe emptyList()
+        post("/api/sessions/$id/segments", mapOf("startT" to 600, "endT" to 1200)).statusCode shouldBe HttpStatus.CREATED
+    }
 }

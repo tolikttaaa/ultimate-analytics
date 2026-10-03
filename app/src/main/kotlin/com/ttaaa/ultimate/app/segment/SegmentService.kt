@@ -33,11 +33,17 @@ class SegmentService(
     private val snapshots: MetricsSnapshotRepository,
 ) {
 
+    /**
+     * Creates a segment. With [overwrite] it takes its time from the segments it overlaps, which are trimmed, split
+     * around it or removed; parts left shorter than [Segment.MIN_DURATION_SEC] go too. Without it, an overlap is a
+     * conflict (spec 9.1).
+     */
     @Transactional
-    fun create(sessionId: UUID, range: TimeRange, drillTypeId: UUID?, label: String?): Segment {
+    fun create(sessionId: UUID, range: TimeRange, drillTypeId: UUID?, label: String?, overwrite: Boolean = false): Segment {
         val session = lockSession(sessionId)
         val segment = Segment(UUID.randomUUID(), sessionId, range, checkDrillType(drillTypeId), label.normalized(), SegmentSource.MANUAL)
-        checkPlacement(session, segment, segments.findBySession(sessionId))
+        val all = segments.findBySession(sessionId)
+        checkPlacement(session, segment, if (overwrite) makeRoom(range, all) else all)
         segments.insertAll(listOf(segment))
         reattributeEfforts(sessionId)
         return segment
@@ -131,6 +137,27 @@ class SegmentService(
     }
 
     fun get(sessionId: UUID, segmentId: UUID): Segment = segments.findBySession(sessionId).find(segmentId)
+
+    /** Cuts [range] out of the segments it overlaps; returns the segments afterwards. */
+    private fun makeRoom(range: TimeRange, all: List<Segment>): List<Segment> = all.flatMap { segment ->
+        if (!segment.range.overlaps(range)) return@flatMap listOf(segment)
+        // What is left before and after the new segment; a part may be empty, so bounds come before ranges.
+        val parts = listOf(
+            segment.range.fromT to minOf(range.fromT, segment.range.toT),
+            maxOf(range.toT, segment.range.fromT) to segment.range.toT,
+        ).filter { (from, to) -> to - from >= Segment.MIN_DURATION_SEC }.map { (from, to) -> TimeRange(from, to) }
+        snapshots.delete(MetricsScope.SEGMENT, segment.id)
+        if (parts.isEmpty()) {
+            remove(segment.id)
+            return@flatMap emptyList()
+        }
+        // The first part keeps the segment's id; a second part (the window was inside it) is a new segment.
+        val kept = segment.copy(range = parts[0], source = SegmentSource.MANUAL)
+        segments.update(kept)
+        val split = parts.drop(1).map { segment.copy(id = UUID.randomUUID(), range = it, source = SegmentSource.MANUAL) }
+        segments.insertAll(split)
+        listOf(kept) + split
+    }
 
     private fun remove(segmentId: UUID) {
         // Efforts lose the segment through the foreign key; the snapshot has no foreign key and is removed here.

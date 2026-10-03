@@ -982,3 +982,9 @@ input {
 .table tr.selected {
   background: color-mix(in srgb, var(--color-accent) 6%, white);
 }
+
+.segment-form .cut-note {
+  width: 100%;
+  margin: 0;
+  color: var(--color-muted);
+}

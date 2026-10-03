@@ -54,17 +54,8 @@ test('upload, open, brush a window and save it as a segment', async ({ page, req
   await expect(metrics.getByRole('row', { name: /^Elapsed/ })).toContainText(duration(to - from))
   await expect(metrics.getByRole('row', { name: /^Efforts \d/ }).locator('td').nth(2)).toHaveText(/^\d+$/)
 
-  // Laps cover the whole session, and segments must not overlap: back to the laps, then free the time of lap 1.
+  // Save the window as a segment; anything in its way would be cut.
   const strip = page.getByLabel('Segments')
-  const stripBox = (await strip.boundingBox())!
-  await strip.click({ button: 'right', position: { x: stripBox.width / 2, y: stripBox.height / 2 } })
-  await page.getByRole('menuitem', { name: 'Reset from laps…' }).click()
-  await expect(strip.locator('.segment')).not.toHaveCount(0)
-  await strip.click({ button: 'right', position: { x: stripBox.width / 2, y: stripBox.height / 2 } })
-  await page.getByRole('menuitem', { name: 'Delete' }).click()
-  await expect(strip.locator('.segment', { hasText: 'Lap 1' })).toHaveCount(0)
-
-  // Save the window as a segment.
   await page.getByRole('button', { name: 'Save as segment' }).click()
   await page.getByLabel('Label').fill('Smoke test')
   await page.getByRole('button', { name: 'Save', exact: true }).click()

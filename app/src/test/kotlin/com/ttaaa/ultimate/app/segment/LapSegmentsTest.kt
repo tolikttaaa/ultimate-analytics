@@ -31,6 +31,12 @@ class LapSegmentsTest {
     }
 
     @Test
+    fun `a single lap is the whole session and gives no segment`() {
+        segmentsFromLaps(sessionId, listOf(Lap(0, TimeRange(0, 6600), "session_end"))) shouldBe emptyList()
+        segmentsFromLaps(sessionId, emptyList()) shouldBe emptyList()
+    }
+
+    @Test
     fun `skips laps that overlap an earlier one`() {
         val laps = listOf(Lap(0, TimeRange(0, 600), null), Lap(1, TimeRange(500, 900), null))
 

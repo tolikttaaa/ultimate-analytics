@@ -1,9 +1,9 @@
 import { type FormEvent, useState } from 'react'
-import { ApiError } from '../../api/client'
 import { useCreateSegment } from '../../api/segments'
 import type { DrillType, Segment } from '../../api/types'
 import { segmentLabel } from '../../components/charts/sessionChartOptions'
 import { duration } from '../../format'
+import { type Cut, cutsBy } from './strip'
 import type { TimeWindow } from './timeWindow'
 
 interface Props {
@@ -51,7 +51,15 @@ interface FormProps {
   onDone: () => void
 }
 
-/** Drill type and label of the new segment; an overlap (409) is explained inline. */
+/** How saving changes a segment the window overlaps, e.g. "Lap 1 is split around it". */
+function describeCut(cut: Cut, drillTypes: DrillType[]): string {
+  const name = segmentLabel(cut.segment, drillTypes)
+  if (cut.kind === 'split') return `${name} is split around it`
+  if (cut.kind === 'replaced') return `${name} is replaced`
+  return `${name} is shortened to ${duration(cut.to[0])}–${duration(cut.to[1])}`
+}
+
+/** Drill type and label of the new segment; segments in the way are cut, and the form says how. */
 function SegmentForm({ sessionId, selection: [from, to], segments, drillTypes, onDone }: FormProps) {
   const create = useCreateSegment(sessionId)
   const [drillTypeId, setDrillTypeId] = useState('')
@@ -65,11 +73,7 @@ function SegmentForm({ sessionId, selection: [from, to], segments, drillTypes, o
     )
   }
 
-  const overlapping = segments.filter((segment) => segment.startT < to && segment.endT > from)
-  const error = create.error instanceof ApiError && create.error.status === 409
-    ? `The window overlaps ${overlapping.map((s) => `${segmentLabel(s, drillTypes)} (${duration(s.startT)}–${duration(s.endT)})`).join(', ') || 'another segment'}. ` +
-      'Select a window between segments, or resize them on the strip.'
-    : create.error?.message
+  const cuts = cutsBy([from, to], segments)
 
   return (
     <form
@@ -94,7 +98,10 @@ function SegmentForm({ sessionId, selection: [from, to], segments, drillTypes, o
       </label>
       <button className="button small primary" type="submit" disabled={create.isPending}>Save</button>
       <button className="button small link" type="button" onClick={onDone}>Cancel</button>
-      {error && <p role="alert" className="error">{error}</p>}
+      {cuts.length > 0 && (
+        <p className="cut-note">The window takes its time from other segments: {cuts.map((cut) => describeCut(cut, drillTypes)).join('; ')}.</p>
+      )}
+      {create.isError && <p role="alert" className="error">{create.error.message}</p>}
     </form>
   )
 }

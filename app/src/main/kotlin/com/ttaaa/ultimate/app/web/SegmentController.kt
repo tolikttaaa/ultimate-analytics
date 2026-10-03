@@ -46,9 +46,16 @@ class SegmentController(
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Create a segment; 409 if it overlaps another one")
-    fun create(@PathVariable id: UUID, @RequestBody body: SegmentCreate): SegmentDto =
-        SegmentDto(segmentService.create(id, TimeRange(body.startT, body.endT), body.drillTypeId, body.label))
+    @Operation(
+        summary = "Create a segment; 409 if it overlaps another one, unless overwrite=true: then the overlapped " +
+            "segments are trimmed, split around it or removed",
+    )
+    fun create(
+        @PathVariable id: UUID,
+        @RequestBody body: SegmentCreate,
+        @RequestParam(defaultValue = "false") overwrite: Boolean,
+    ): SegmentDto =
+        SegmentDto(segmentService.create(id, TimeRange(body.startT, body.endT), body.drillTypeId, body.label, overwrite))
 
     @PatchMapping("/{segmentId}")
     @Operation(summary = "Edit bounds, drill type or label; 409 if the new bounds overlap another segment")

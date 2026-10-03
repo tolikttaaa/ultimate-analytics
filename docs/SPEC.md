@@ -172,7 +172,7 @@ Analysis is a deterministic pure function `analyze(rawSession, params) -> Analys
 7. **Detect pauses** (6.3) and set `inPause` on samples.
 8. **Detect efforts** (6.4) and compute per-effort metrics.
 9. **Match geozone** using the session start position, or the first valid position (6.6).
-10. **Create segments from laps** if the session has none yet (upload only; recompute never touches segments).
+10. **Create segments from laps** if the session has none yet (upload only; recompute never touches segments). A single lap covers the whole session and gives no segment.
 11. **Compute and cache** session and segment metrics (6.5).
 
 ### 6.2 Parameters
@@ -504,12 +504,12 @@ JSON over HTTP under `/api`, documented by springdoc-openapi; the frontend uses 
 | GET | `/api/sessions/{id}/file` | Download the raw FIT file |  |
 | POST | `/api/sessions/{id}/recompute` | Recompute one session |  |
 | POST | `/api/sessions/recompute-outdated` | Recompute all outdated sessions | returns count |
-| POST | `/api/sessions/{id}/segments` | Create segment | body: `startT`, `endT`, `drillTypeId?`, `label?`; 409 on overlap |
+| POST | `/api/sessions/{id}/segments` | Create segment | body: `startT`, `endT`, `drillTypeId?`, `label?`; 409 on overlap, unless `overwrite=true`: then overlapped segments are trimmed, split around it or removed |
 | PATCH | `/api/sessions/{id}/segments/{segId}` | Edit bounds, type or label | 409 on overlap |
 | DELETE | `/api/sessions/{id}/segments/{segId}` | Delete segment |  |
 | POST | `/api/sessions/{id}/segments/{segId}/split` | Split at `atT` | both parts keep type and label |
 | POST | `/api/sessions/{id}/segments/merge` | Merge adjacent segments | body: `segmentIds[]`; type of first wins |
-| POST | `/api/sessions/{id}/segments/reset-from-laps` | Replace all segments with lap-based ones | requires `confirm=true` |
+| POST | `/api/sessions/{id}/segments/reset-from-laps` | Replace all segments with lap-based ones (none for a single lap) | requires `confirm=true` |
 | GET | `/api/sessions/{id}/segments/{segId}/metrics` | Segment metrics | cached snapshot |
 | GET, POST | `/api/drill-types` | List / create drill types |  |
 | PATCH, DELETE | `/api/drill-types/{id}` | Edit / delete | delete leaves segments untyped |
@@ -594,7 +594,7 @@ Window selection:
 2. On `brushEnd`, the selected `[from, to]` is stored in the URL (`?from=600&to=1200`) and in component state.
 3. The metrics panel requests `/metrics?from&to` (debounced 200 ms, cached by TanStack Query) and shows a "Window" column next to the "Session" column.
 4. The map highlights the window part of the track.
-5. A "Save as segment" button opens a small form (drill type, label) and calls `POST /segments`; a 409 overlap error is shown inline.
+5. A "Save as segment" button opens a small form (drill type, label) and calls `POST /segments?overwrite=true`; the form says beforehand how overlapped segments are cut (split, shortened or replaced).
 6. Clicking a segment in the strip selects its range as the window; Escape clears the selection.
 
 Map (MapLibre GL JS):

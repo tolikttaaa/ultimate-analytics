@@ -663,6 +663,14 @@
             "type" : "string",
             "format" : "uuid"
           }
+        }, {
+          "in" : "query",
+          "name" : "overwrite",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
         } ],
         "requestBody" : {
           "content" : {
@@ -686,7 +694,7 @@
             "description" : "Created"
           }
         },
-        "summary" : "Create a segment; 409 if it overlaps another one",
+        "summary" : "Create a segment; 409 if it overlaps another one, unless overwrite=true: then the overlapped segments are trimmed, split around it or removed",
         "tags" : [ "Segments" ]
       }
     },

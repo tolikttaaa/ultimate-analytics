@@ -43,13 +43,21 @@ describe('WindowBar', () => {
     expect(calls[0].body).toEqual({ startT: 600, endT: 1200, drillTypeId: 'd1', label: '5 x 30 m' })
   })
 
-  it('explains an overlap with the segments in the way', async () => {
-    renderBar(() => problem(409, 'The segment overlaps segment x [1000, 1500]'))
+  it('says what saving does to the segments in the way, and saves over them', async () => {
+    const { calls } = renderBar(() => segment())
 
     await userEvent.click(screen.getByRole('button', { name: 'Save as segment' }))
+    expect(screen.getByText(/takes its time from other segments: Game is shortened to 20:00–25:00\./)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('The window overlaps Game (16:40–25:00).')
+    await vi.waitFor(() => expect(calls[0]?.query.get('overwrite')).toBe('true'))
+  })
+
+  it('shows why saving failed', async () => {
+    renderBar(() => problem(400, 'A segment must end within the session (at most 1100)'))
+    await userEvent.click(screen.getByRole('button', { name: 'Save as segment' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('A segment must end within the session')
   })
 
   it('clears the window', async () => {
