@@ -113,7 +113,7 @@ export function MetricsPanel({ columns }: { columns: MetricsColumn[] }) {
         ))}
         <tbody>
           <tr className="group">
-            <th colSpan={columns.length + 1}>Speed zones (time · distance)</th>
+            <th colSpan={columns.length + 1}>Speed zones: time and distance</th>
           </tr>
           {(columns[0].metrics?.zones ?? []).map((zone, index) => (
             <tr key={zone.zone}>
@@ -122,7 +122,7 @@ export function MetricsPanel({ columns }: { columns: MetricsColumn[] }) {
                 const own = column.metrics?.zones[index]
                 return (
                   <td key={column.label} className="number">
-                    {own ? `${duration(own.timeSec)} · ${distance(own.distanceM)}` : PENDING}
+                    {own ? `${duration(own.timeSec)}, ${distance(own.distanceM)}` : PENDING}
                   </td>
                 )
               })}

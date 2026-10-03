@@ -1,8 +1,16 @@
 import { useNavigate } from 'react-router'
 import { confirmDeleteSessions, useDeleteSessions, useRecomputeSession, useUpdateSession } from '../../api/sessions'
-import type { SessionDetail, Surface } from '../../api/types'
-import { Badge, SurfaceChip } from '../../components/Chips'
+import type { SessionDetail, Surface, SurfaceSource } from '../../api/types'
+import { Badge } from '../../components/Chips'
+import { MetricValue } from '../../components/MetricValue'
 import { distance, duration, localDateTime, pace, speedKmh } from '../../format'
+
+/** Where the surface comes from, next to it. */
+const SURFACE_SOURCES: Record<SurfaceSource, string> = {
+  GEOZONE: 'from the geozone',
+  MANUAL: 'set by hand',
+  NONE: 'no geozone here',
+}
 
 /** Date, place, surface and key metrics of a session, with its actions (spec 10.2). */
 export function SessionHeader({ session }: { session: SessionDetail }) {
@@ -24,8 +32,7 @@ export function SessionHeader({ session }: { session: SessionDetail }) {
     <header className="session-header">
       <div className="session-title">
         <h1>{localDateTime(session.startTime, session.localTzOffsetSec)}</h1>
-        <span className="muted">{session.geozoneName ?? 'Unknown place'}</span>
-        <SurfaceChip surface={session.surface} source={session.surfaceSource} />
+        <span className="session-place">{session.geozoneName ?? 'Unknown place'}</span>
         <label className="inline-label">
           Surface
           <select
@@ -38,6 +45,7 @@ export function SessionHeader({ session }: { session: SessionDetail }) {
             <option value="UNKNOWN">Unknown</option>
           </select>
         </label>
+        <span className="muted">{SURFACE_SOURCES[session.surfaceSource]}</span>
         <span className="session-actions">
           {session.outdated && (
             <Badge tone="warning" title="Analysed with an older analysis version.">outdated</Badge>
@@ -71,7 +79,7 @@ export function SessionHeader({ session }: { session: SessionDetail }) {
         {keyMetrics.map(([label, value]) => (
           <div key={label}>
             <dt>{label}</dt>
-            <dd>{value}</dd>
+            <dd><MetricValue value={value} /></dd>
           </div>
         ))}
       </dl>

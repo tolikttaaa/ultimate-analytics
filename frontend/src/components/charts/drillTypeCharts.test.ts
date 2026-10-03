@@ -33,7 +33,7 @@ describe('trendChartOption', () => {
 
   it('explains a point on hover', () => {
     expect(option.tooltip.formatter({ data: option.series[0].data[1] }))
-      .toBe('2026-09-16 · Sand<br/>Best peak speed: <b>28.4 km/h</b><br/>2 segments')
+      .toBe('2026-09-16, sand<br/>Best peak speed: <b>28.4 km/h</b><br/>2 segments')
   })
 
   it('reads every metric from the API metrics', () => {
@@ -47,5 +47,11 @@ describe('trendChartOption', () => {
       ['active-min', 1857 / 60],
       ['hr-avg', 148.6],
     ])
+  })
+
+  it('keeps a single day in a month-long axis instead of years', () => {
+    const one = trendChartOption(rows.slice(0, 1), best, '#e65100') as unknown as { xAxis: { min: number; max: number } }
+    expect(one.xAxis.max - one.xAxis.min).toBe(30 * 86_400_000)
+    expect((option as unknown as { xAxis: { min?: number } }).xAxis.min).toBeUndefined()
   })
 })

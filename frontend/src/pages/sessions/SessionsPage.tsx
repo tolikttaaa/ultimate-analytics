@@ -114,7 +114,7 @@ export function SessionsPage() {
               Previous
             </button>
             <span>
-              Page {page + 1} of {sessions.data.totalPages} · {sessions.data.totalItems} sessions
+              Page {page + 1} of {sessions.data.totalPages}, {sessions.data.totalItems} sessions
             </span>
             <button
               className="button"

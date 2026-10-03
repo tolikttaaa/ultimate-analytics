@@ -44,7 +44,7 @@ describe('routes', () => {
     renderAt('/')
 
     expect(await screen.findByRole('link', { name: '2026-09-30 19:07' })).toHaveAttribute('href', '/sessions/s1')
-    expect(await screen.findByText('analysis v1')).toBeInTheDocument()
+    expect(await screen.findByText('Analysis v1')).toBeInTheDocument()
   })
 
   it('loads the session screen on demand', async () => {

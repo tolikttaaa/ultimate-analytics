@@ -595,3 +595,25 @@ Newest entries at the bottom.
     drills. Sessions imported before keep their lap segment; saving over it now works.
   - The smoke test saves the window directly again.
 - **Alternatives:** removing existing single-lap segments with a migration (it would change user data).
+
+## 2026-10-03 — Design refresh (backlog)
+
+- **Context:** backlog: a more modern design. The user chose to refresh the own CSS (no component library) and pointed
+  to the `frontend-design` plugin skill, whose process was followed: plan, review the plan against the brief, build,
+  critique from screenshots.
+- **Decision:**
+  - **Brief:** a personal analysis tool for an Ultimate player (GPS sprints, heart rate, drills on grass and sand),
+    desktop-first and dense.
+  - **Colour:** neutrals tinted towards turf (page `#f1f4f0`, chalk-white surfaces, pitch-ink text `#1b2620`,
+    sideline grey `#5f6d65`), one interactive accent ("disc blue" `#1d5fbf`); grass green, sand amber and cone orange
+    keep their meanings only. All colours are tokens on `:root`, ready for the dark theme.
+  - **Type:** Barlow for the interface, Barlow Condensed for titles, the wordmark and key numbers; self-hosted
+    (`@fontsource`), so no requests to Google. Charts name the font, as ECharts draws on a canvas.
+  - **One loud element:** the session's key numbers as a scoreboard (large condensed numerals, smaller units, thin
+    dividers like field lines). Everything else stays quiet: flat bordered tables and panels, shadows only on
+    floating things (menus, drawer, dialog), tabs underlined like chalk lines, a flying-disc mark by the wordmark.
+  - **Removed template tells:** middle-dot meta strings, an all-caps menu heading, monospace file names and codes. The
+    session header names the place once, with the surface select and where the surface comes from (the chip and the
+    repeated "Unknown" went).
+  - The drill-type trend keeps a single day on a month-long axis (ECharts stretched it over years).
+- **Alternatives:** a component library (Mantine); Inter or the system font; card grids for key numbers.

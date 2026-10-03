@@ -1,5 +1,6 @@
 import type { EChartsCoreOption } from 'echarts/core'
 import type { Schemas, Surface, WindowMetrics } from '../../api/types'
+import { CHART_FONT, CHART_TEXT } from './sessionChartOptions'
 
 type SessionRow = Schemas['DrillTypeSessionRow']
 
@@ -44,20 +45,26 @@ export function trendChartOption(rows: SessionRow[], metric: TrendMetric, color:
       itemStyle: { color: SURFACE_COLORS[row.surface] },
     }]
   })
+  // With one day only, ECharts would stretch the axis over years: a month around it instead.
+  const times = points.map((point) => Date.parse(point.value[0] as string))
+  const oneDay = times.length > 0 && Math.max(...times) - Math.min(...times) < 86_400_000
+  const range = oneDay ? { min: Math.min(...times) - 15 * 86_400_000, max: Math.max(...times) + 15 * 86_400_000 } : {}
   return {
     animation: false,
+    ...CHART_TEXT,
     grid: { left: 56, right: 24, top: 36, bottom: 32 },
-    title: { text: `${metric.label} (${metric.unit})`, left: 56, top: 4, textStyle: { fontSize: 12, fontWeight: 600, color: '#59636e' } },
+    title: { text: `${metric.label} (${metric.unit})`, left: 56, top: 4, textStyle: { fontFamily: CHART_FONT, fontSize: 13, fontWeight: 600, color: '#59636e' } },
     tooltip: {
       trigger: 'item',
+      textStyle: { fontFamily: CHART_FONT },
       formatter: (params: { data: (typeof points)[number] }) => {
         const { value, surface, segments } = params.data
-        return `${day(value[0] as string)} · ${SURFACE_NAMES[surface]}<br/>${metric.label}: <b>${value[1]} ${metric.unit}</b>` +
+        return `${day(value[0] as string)}, ${SURFACE_NAMES[surface].toLowerCase()}<br/>${metric.label}: <b>${value[1]} ${metric.unit}</b>` +
           `<br/>${segments} segment${segments === 1 ? '' : 's'}`
       },
     },
     // Padding keeps the points off the plot edges.
-    xAxis: { type: 'time', boundaryGap: ['4%', '4%'], axisLabel: { formatter: '{yyyy}-{MM}-{dd}', hideOverlap: true } },
+    xAxis: { type: 'time', ...range, boundaryGap: ['4%', '4%'], axisLabel: { formatter: '{yyyy}-{MM}-{dd}', hideOverlap: true } },
     yAxis: { type: 'value', scale: true, splitNumber: 4, boundaryGap: ['10%', '10%'] },
     series: [{
       name: metric.label,

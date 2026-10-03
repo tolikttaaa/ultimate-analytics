@@ -4,6 +4,7 @@ import { ApiError } from '../../api/client'
 import { type DrillTypeStatsFilter, useDrillTypeStats } from '../../api/drillTypes'
 import type { Surface } from '../../api/types'
 import { SurfaceChip } from '../../components/Chips'
+import { MetricValue } from '../../components/MetricValue'
 import { EChart } from '../../components/charts/EChart'
 import { TREND_METRICS, trendChartOption } from '../../components/charts/drillTypeCharts'
 import { endOfDay, startOfDay } from '../../dates'
@@ -58,7 +59,7 @@ export function DrillTypePage() {
           {type && <span className="swatch large" style={{ background: type.color }} />}
           {type?.name ?? 'Drill type'}
         </h1>
-        {type && <span className="muted">{KIND_LABELS[type.kind]} · {type.code}</span>}
+        {type && <span className="muted">{KIND_LABELS[type.kind]}, code {type.code}</span>}
       </div>
 
       <div className="filters">
@@ -97,7 +98,7 @@ export function DrillTypePage() {
               <div><dt>Segments</dt><dd>{segmentCount}</dd></div>
               <div><dt>Time</dt><dd>{duration(totals.time.elapsedSec)}</dd></div>
               <div><dt>Efforts</dt><dd>{totals.efforts.count}</dd></div>
-              <div><dt>Best peak speed</dt><dd>{speedKmh(totals.efforts.peakSpeed?.best)}</dd></div>
+              <div><dt>Best peak speed</dt><dd><MetricValue value={speedKmh(totals.efforts.peakSpeed?.best)} /></dd></div>
             </dl>
             <div className="trend">
               <label className="inline-label">

@@ -67,7 +67,8 @@ describe('SessionPage', () => {
 
     expect(await screen.findByRole('heading', { name: '2026-03-25 15:39' })).toBeInTheDocument()
     expect(screen.getByText('Akrotiri field')).toBeInTheDocument()
-    expect(screen.getByText('Grass', { selector: '.chip' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Surface')).toHaveValue('GRASS')
+    expect(screen.getByText('from the geozone')).toBeInTheDocument()
     for (const [label, value] of [['Duration', '2:10:00'], ['Active', '30:57'], ['Distance', '7.48 km'], ['Efforts', '26']]) {
       expect(screen.getByText(label, { selector: 'dt' }).nextSibling).toHaveTextContent(value)
     }
@@ -84,7 +85,7 @@ describe('SessionPage', () => {
     expect(metrics.getByText('Peak speed').nextSibling).toHaveTextContent('23.4 km/h / 27.4 km/h')
     expect(metrics.getByText('Mean acceleration (GPS)').closest('tr')).toHaveAttribute('title', expect.stringContaining('1 Hz GPS'))
     expect(metrics.getByText('Zone 5').nextSibling).toHaveTextContent('15 %')
-    expect(metrics.getByText('Sprint').nextSibling).toHaveTextContent('5:00 · 900 m')
+    expect(metrics.getByText('Sprint').nextSibling).toHaveTextContent('5:00, 900 m')
   })
 
   it('shows the map with the window of the URL and the matched geozone', async () => {
@@ -153,7 +154,8 @@ describe('SessionPage', () => {
     const calls = renderSession()
     await userEvent.selectOptions(await screen.findByLabelText('Surface'), 'SAND')
 
-    expect(await screen.findByText('Sand', { selector: '.chip' })).toBeInTheDocument()
+    expect(await screen.findByText('set by hand')).toBeInTheDocument()
+    expect(screen.getByLabelText('Surface')).toHaveValue('SAND')
     expect(calls.find((call) => call.method === 'PATCH')?.body).toEqual({ surface: 'SAND' })
   })
 

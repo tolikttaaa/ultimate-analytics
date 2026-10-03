@@ -56,11 +56,11 @@ describe('SessionsPage', () => {
     })
     renderPage(<SessionsPage />)
 
-    expect(await screen.findByText('Page 1 of 2 · 21 sessions')).toBeInTheDocument()
+    expect(await screen.findByText('Page 1 of 2, 21 sessions')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled()
     await userEvent.click(screen.getByRole('button', { name: 'Next' }))
 
-    expect(await screen.findByText('Page 2 of 2 · 21 sessions')).toBeInTheDocument()
+    expect(await screen.findByText('Page 2 of 2, 21 sessions')).toBeInTheDocument()
     expect(calls.at(-1)?.query.get('page')).toBe('1')
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
   })

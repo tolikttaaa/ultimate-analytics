@@ -7,6 +7,14 @@ import { duration, speedKmh } from '../../format'
  * Pure functions of the API data, so they can be tested without a canvas.
  */
 
+/** The interface font; ECharts draws on a canvas and needs it named. */
+export const CHART_FONT = "Barlow, system-ui, sans-serif"
+
+/** Text of every chart in the interface font. */
+export const CHART_TEXT = {
+  textStyle: { fontFamily: CHART_FONT },
+}
+
 /** Plot margins shared by the charts and the segment strip, so their time axes line up. */
 export const PLOT_MARGIN = { left: 64, right: 24 }
 
@@ -107,9 +115,10 @@ interface BaseOptions {
 function baseOption({ series, lastT, title, unit, decimals, withSlider }: BaseOptions): EChartsCoreOption {
   return {
     animation: false,
-    title: { text: title, left: PLOT_MARGIN.left, top: 0, textStyle: { fontSize: 12, fontWeight: 600, color: '#59636e' } },
+    ...CHART_TEXT,
+    title: { text: title, left: PLOT_MARGIN.left, top: 0, textStyle: { fontFamily: CHART_FONT, fontSize: 13, fontWeight: 600, color: '#59636e' } },
     grid: { ...PLOT_MARGIN, top: 24, bottom: withSlider ? 56 : 22 },
-    tooltip: { trigger: 'axis', axisPointer: { type: 'line' }, formatter: tooltipFormatter(series, unit, decimals) },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'line' }, textStyle: { fontFamily: CHART_FONT }, formatter: tooltipFormatter(series, unit, decimals) },
     xAxis: {
       type: 'value',
       min: 0,
@@ -268,9 +277,11 @@ export function effortChartOption(series: SessionSeries, effort: Effort): EChart
   const units: Record<string, [string, number]> = { Speed: ['km/h', 1], 'GPS acceleration': ['m/s²', 2] }
   return {
     animation: false,
+    ...CHART_TEXT,
     grid: { left: 44, right: 44, top: 30, bottom: 26 },
     tooltip: {
       trigger: 'axis',
+      textStyle: { fontFamily: CHART_FONT },
       formatter: (params: unknown) => {
         const items = params as { axisValue: number; seriesName: string; marker: string; value: [number, number | null] }[]
         const lines = items
