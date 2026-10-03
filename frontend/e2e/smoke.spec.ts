@@ -29,7 +29,7 @@ test('upload, open, brush a window and save it as a segment', async ({ page, req
   await expect(result.locator('.status')).toHaveText(/created|already uploaded/)
 
   // The session opens with its charts and map.
-  await result.getByRole('link', { name: 'Open' }).click()
+  await result.getByRole('link', { name: 'Open', exact: true }).click()
   await expect(page).toHaveURL(/\/sessions\/[0-9a-f-]{36}$/)
   const sessionId = page.url().split('/').pop()!
   await expect(page.locator('.echart canvas')).toHaveCount(3)
