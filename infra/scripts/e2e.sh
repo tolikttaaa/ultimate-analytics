@@ -4,6 +4,7 @@
 #
 #   ./infra/scripts/e2e.sh                 # build, start, test, remove
 #   ./infra/scripts/e2e.sh --headed        # extra arguments go to `playwright test`
+#   ./infra/scripts/e2e.sh --config playwright.guide.config.ts   # the user guide's screenshots (docs/guide/)
 #
 # Needs Docker with compose, Node.js and Playwright's Chromium (`cd frontend && npx playwright install chromium`).
 set -euo pipefail

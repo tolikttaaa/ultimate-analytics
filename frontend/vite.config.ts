@@ -26,8 +26,8 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    // e2e/ holds the Playwright smoke test, run by infra/scripts/e2e.sh.
-    exclude: [...configDefaults.exclude, 'e2e/**'],
+    // e2e/ and guide/ hold Playwright tests, run by infra/scripts/e2e.sh.
+    exclude: [...configDefaults.exclude, 'e2e/**', 'guide/**'],
     setupFiles: ['./src/test/setup.ts'],
   },
 })

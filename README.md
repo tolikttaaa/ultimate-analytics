@@ -11,6 +11,8 @@ drill type and any selected time window.
 
 > Work in progress. The commands below describe the target setup; they become available step by step.
 
+**Using the app:** see the [user guide](docs/USER_GUIDE.md), with annotated screenshots of every screen.
+
 ## Prerequisites
 
 - JDK 21 (selected through the Gradle toolchain; Gradle itself may run on a newer JDK)
@@ -71,7 +73,8 @@ cd frontend && npm ci && npx playwright install chromium && cd ..
 ./infra/scripts/e2e.sh
 ```
 
-CI runs it on every push.
+CI runs it on every push. The same script, with `--config playwright.guide.config.ts`, renders the screenshots of the
+user guide into `docs/guide/`.
 
 ## Base maps
 

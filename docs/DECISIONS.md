@@ -642,3 +642,15 @@ Newest entries at the bottom.
 - **Decision:** effort markers have no tooltip of their own; the time tooltip of the speed chart names the effort under
   the cursor (its seconds, ±2 s, as a zoomed-out pixel spans seconds) with its peak and first-3-s speed. Time
   tooltips are passed on by time, so all charts agree. A click on a marker still opens the effort drawer.
+
+## 2026-10-03 — User guide (backlog)
+
+- **Context:** backlog: a user guide with screenshots and marks on them. The user chose screenshots of the real
+  sessions (the golden files, already public in the repo).
+- **Decision:** `docs/USER_GUIDE.md`, written for the player using the app, with ten screenshots in `docs/guide/`
+  (JPEG, 1.3 MB together). A Playwright script (`frontend/guide/guide.spec.ts`) fills a fresh stack through the API
+  (golden sessions, drill types, a geozone, segments, two manual surfaces), visits every screen and draws numbered
+  marks next to the elements the guide explains, inside an open dialog when there is one. The e2e script runs it
+  (`--config playwright.guide.config.ts`), so the screenshots can be redone whenever the UI changes, without touching
+  the local data.
+- **Alternatives:** hand-made screenshots (go stale); PNG (about twice the size).
