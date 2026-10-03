@@ -21,17 +21,19 @@ const EMPTY: FeatureCollection = { type: 'FeatureCollection', features: [] }
 
 /** Where a session started, with the geozones around it, for picking its surface (backlog: map in the upload dialog). */
 export function PlaceMap({ config, position, geozones, previewRadiusM }: Props) {
+  // By value: the caller passes a new array on every render, which must not re-centre the map.
+  const [lon, lat] = position
   const map = useRef<Map | null>(null)
   const data = useMemo((): Record<string, FeatureCollection> => {
     const preview = previewRadiusM != null && previewRadiusM > 0
-      ? geozoneOutline({ type: SHAPE.circle, lon: position[0], lat: position[1], radiusM: previewRadiusM })
+      ? geozoneOutline({ type: SHAPE.circle, lon, lat, radiusM: previewRadiusM })
       : null
     return {
       'place-geozones': geozoneFeatures(geozones),
       'place-preview': preview ? { type: 'FeatureCollection', features: [preview] } : EMPTY,
-      'place-start': { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: position } }] },
+      'place-start': { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [lon, lat] } }] },
     }
-  }, [position, geozones, previewRadiusM])
+  }, [lon, lat, geozones, previewRadiusM])
   const latest = useRef(data)
 
   useLayoutEffect(() => {
@@ -44,8 +46,8 @@ export function PlaceMap({ config, position, geozones, previewRadiusM }: Props) 
 
   // Another session: the map moves to its start.
   useEffect(() => {
-    map.current?.jumpTo({ center: position as [number, number] })
-  }, [position])
+    map.current?.jumpTo({ center: [lon, lat] })
+  }, [lon, lat])
 
   function addOverlays(target: Map) {
     for (const [id, value] of Object.entries(latest.current)) target.addSource(id, { type: 'geojson', data: value })
@@ -69,7 +71,7 @@ export function PlaceMap({ config, position, geozones, previewRadiusM }: Props) 
   return (
     <MapView
       config={config}
-      center={position as [number, number]}
+      center={[lon, lat]}
       zoom={15.5}
       onStyleLoad={addOverlays}
       onMap={(instance) => (map.current = instance)}

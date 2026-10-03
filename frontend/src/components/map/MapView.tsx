@@ -32,6 +32,8 @@ export function MapView(props: Props) {
   const [base, setBase] = useState<BaseMap>('map')
   const { theme } = useTheme()
   const latest = useRef({ onStyleLoad, onMap, bounds, fitBoundsOptions, center, zoom, base, theme })
+  /** The theme of the base map the map shows, so a style is only loaded again when the theme really changes. */
+  const shownTheme = useRef(theme)
 
   useLayoutEffect(() => {
     latest.current = { onStyleLoad, onMap, bounds, fitBoundsOptions, center, zoom, base, theme }
@@ -40,7 +42,7 @@ export function MapView(props: Props) {
   useEffect(() => {
     const instance = new Map({
       container: container.current!,
-      style: baseMapStyle(config, latest.current.base, latest.current.theme),
+      style: baseMapStyle(config, latest.current.base, (shownTheme.current = latest.current.theme)),
       bounds: latest.current.bounds,
       fitBoundsOptions: latest.current.fitBoundsOptions,
       center: latest.current.center,
@@ -60,7 +62,9 @@ export function MapView(props: Props) {
 
   // A new theme brings its base map; the overlays come back with `style.load`.
   useEffect(() => {
-    map.current?.setStyle(baseMapStyle(config, latest.current.base, theme), { diff: false })
+    if (!map.current || shownTheme.current === theme) return
+    shownTheme.current = theme
+    map.current.setStyle(baseMapStyle(config, latest.current.base, theme), { diff: false })
   }, [config, theme])
 
   function show(next: BaseMap) {
