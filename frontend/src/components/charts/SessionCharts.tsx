@@ -1,6 +1,7 @@
 import type { ECharts } from 'echarts/core'
 import { useEffect, useMemo, useRef } from 'react'
 import { type ChartEventHandlers, EChart } from './EChart'
+import { useChartPalette } from './useChartPalette'
 import {
   accelChartOption,
   brushAreas,
@@ -30,12 +31,13 @@ interface Props extends SpeedChartData {
 export function SessionCharts(props: Props) {
   const { series, efforts, segments, drillTypes, lastT, selection, onSelect, onEffortClick, onZoom, onCursor } = props
   const speedChart = useRef<ECharts | null>(null)
+  const palette = useChartPalette()
   const speed = useMemo(
-    () => speedChartOption({ series, efforts, segments, drillTypes, lastT }),
-    [series, efforts, segments, drillTypes, lastT],
+    () => speedChartOption({ palette, series, efforts, segments, drillTypes, lastT }),
+    [palette, series, efforts, segments, drillTypes, lastT],
   )
-  const accel = useMemo(() => accelChartOption(series, lastT), [series, lastT])
-  const heartRate = useMemo(() => heartRateChartOption(series, lastT), [series, lastT])
+  const accel = useMemo(() => accelChartOption(series, lastT, palette), [series, lastT, palette])
+  const heartRate = useMemo(() => heartRateChartOption(series, lastT, palette), [series, lastT, palette])
   // Connected charts repeat every zoom, axis pointer and brush action, so listening on one of them is enough.
   const speedEvents = useMemo<ChartEventHandlers>(() => ({
     datazoom: (_, chart) => onZoom?.(zoomedRange(chart.getOption(), lastT)),

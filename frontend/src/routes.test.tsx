@@ -1,5 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -57,6 +58,16 @@ describe('routes', () => {
     stubApi()
     renderAt('/geozones')
     expect(await screen.findByRole('heading', { name: 'Geozones' })).toBeInTheDocument()
+  })
+
+  it('switches the theme from the header', async () => {
+    stubApi()
+    renderAt('/')
+    await userEvent.click(await screen.findByRole('button', { name: 'Dark' }))
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(screen.getByRole('button', { name: 'Dark' })).toHaveAttribute('aria-pressed', 'true')
+    await userEvent.click(screen.getByRole('button', { name: 'System' }))
+    expect(document.documentElement.dataset.theme).toBe('light')
   })
 
   it('shows the drill types', async () => {

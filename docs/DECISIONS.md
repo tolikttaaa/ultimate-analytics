@@ -617,3 +617,19 @@ Newest entries at the bottom.
     repeated "Unknown" went).
   - The drill-type trend keeps a single day on a month-long axis (ECharts stretched it over years).
 - **Alternatives:** a component library (Mantine); Inter or the system font; card grids for key numbers.
+
+## 2026-10-03 — Light and dark themes (backlog)
+
+- **Context:** backlog: light and dark themes, chosen by the user, default following the system.
+- **Decision:**
+  - A *Light / Dark / System* switch in the header; the choice is kept in `localStorage` of this browser (a
+    per-viewer convenience; blocked storage keeps it for the page only). *System* follows `prefers-color-scheme`,
+    also when it changes. `data-theme` on `<html>` switches the CSS tokens; an inline script in `index.html` sets it
+    before the first paint, so no flash of the wrong theme.
+  - Dark tokens: the pitch at night (`#0e1411` page, `#151d19` surfaces, `#e3ebe5` ink), a lighter disc blue
+    `#6ea4ff`, and lighter grass, sand and status colours with dark tints.
+  - Charts draw on a canvas and take a palette per theme (lines, rest shading, axes, grid, tooltip, brush, slider).
+  - Maps take OpenFreeMap's dark style in the dark theme (`app.map.vector-style-url-dark`, configurable like the
+    light one); the session track is light on dark tiles; satellite imagery is the same in both. MapLibre's own
+    controls get dark styles.
+- **Alternatives:** ECharts' built-in dark theme (colours not matched to the tokens); following the system only.

@@ -7,6 +7,7 @@ import { SurfaceChip } from '../../components/Chips'
 import { MetricValue } from '../../components/MetricValue'
 import { EChart } from '../../components/charts/EChart'
 import { TREND_METRICS, trendChartOption } from '../../components/charts/drillTypeCharts'
+import { useChartPalette } from '../../components/charts/useChartPalette'
 import { endOfDay, startOfDay } from '../../dates'
 import { duration, speedKmh } from '../../format'
 import { MetricsPanel } from '../session/MetricsPanel'
@@ -34,7 +35,8 @@ export function DrillTypePage() {
   const metric = TREND_METRICS.find((candidate) => candidate.key === metricKey) ?? TREND_METRICS[0]
   const sessions = stats.data?.sessions
   const color = stats.data?.drillType.color ?? '#59636e'
-  const option = useMemo(() => (sessions ? trendChartOption(sessions, metric, color) : null), [sessions, metric, color])
+  const palette = useChartPalette()
+  const option = useMemo(() => (sessions ? trendChartOption(sessions, metric, color, palette) : null), [sessions, metric, color, palette])
 
   function update(key: string, value: string | null) {
     const next = new URLSearchParams(params)

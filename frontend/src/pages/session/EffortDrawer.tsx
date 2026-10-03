@@ -2,6 +2,7 @@ import { lazy, Suspense, useMemo } from 'react'
 import type { Effort, MapConfig, SessionSeries } from '../../api/types'
 import { EChart } from '../../components/charts/EChart'
 import { effortChartOption } from '../../components/charts/sessionChartOptions'
+import { useChartPalette } from '../../components/charts/useChartPalette'
 import { duration, speedKmh } from '../../format'
 
 const EffortMap = lazy(() => import('../../components/map/EffortMap').then((module) => ({ default: module.EffortMap })))
@@ -52,7 +53,8 @@ export function EffortDrawer({ effortId, efforts, series, mapConfig, onSelect, o
   const sorted = useMemo(() => [...efforts].sort((a, b) => a.startT - b.startT), [efforts])
   const index = sorted.findIndex((effort) => effort.id === effortId)
   const effort = sorted[index]
-  const option = useMemo(() => (effort ? effortChartOption(series, effort) : null), [series, effort])
+  const palette = useChartPalette()
+  const option = useMemo(() => (effort ? effortChartOption(series, effort, palette) : null), [series, effort, palette])
   if (!effort || !option) return null
 
   return (

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { drillType, effort, segment, sessionSeries } from '../../test/data'
 import {
+  CHART_PALETTES,
   accelChartOption,
   activityRuns,
   brushAreas,
@@ -225,5 +226,18 @@ describe('effortChartOption', () => {
       { axisValue: 4, seriesName: 'Speed', marker: '•', value: [4, 14.4] },
       { axisValue: 4, seriesName: 'GPS acceleration', marker: '•', value: [4, -2] },
     ])).toBe('0:04<br/>•Speed: <b>14.4 km/h</b><br/>•GPS acceleration: <b>-2.00 m/s²</b>')
+  })
+})
+
+describe('palettes', () => {
+  it('draw the charts in the colours of the theme', () => {
+    const dark = asOption(accelChartOption(sessionSeries(), 9, CHART_PALETTES.dark)) as Option & {
+      series: { color: string }[]
+      tooltip: { backgroundColor: string }
+    }
+    expect(dark.series[0].color).toBe(CHART_PALETTES.dark.accel)
+    expect(dark.tooltip.backgroundColor).toBe(CHART_PALETTES.dark.tooltipBg)
+    expect((asOption(accelChartOption(sessionSeries(), 9)) as unknown as { series: { color: string }[] }).series[0].color)
+      .toBe(CHART_PALETTES.light.accel)
   })
 })

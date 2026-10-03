@@ -54,6 +54,8 @@ app:
     # Base maps of the frontend (spec 10.2), served by GET /api/config. OpenFreeMap: free, no key, attribution shown
     # by MapLibre.
     vector-style-url: https://tiles.openfreemap.org/styles/liberty
+    # The same in the dark theme
+    vector-style-url-dark: https://tiles.openfreemap.org/styles/dark
     satellite:
       # XYZ raster tiles with {z}/{x}/{y}, usually with a provider key: set APP_MAP_SATELLITE_TILES_URL per
       # environment, never commit it. Empty: no satellite base map.

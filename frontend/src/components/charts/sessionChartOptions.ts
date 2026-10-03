@@ -1,6 +1,7 @@
 import type { EChartsCoreOption } from 'echarts/core'
 import type { DrillType, Effort, Segment, SessionSeries } from '../../api/types'
 import { duration, speedKmh } from '../../format'
+import type { Theme } from '../../theme'
 
 /*
  * ECharts options of the session charts (spec 10.2): speed, GPS acceleration and heart rate over the session time t.
@@ -19,7 +20,69 @@ export const CHART_TEXT = {
 export const PLOT_MARGIN = { left: 64, right: 24 }
 
 const MPS_TO_KMH = 3.6
-const COLORS = { speed: '#1565c0', recorded: '#8c959f', accel: '#6a1b9a', hr: '#c62828', rest: 'rgba(110, 118, 129, 0.15)' }
+/** Colours of the charts in one theme; lines, marks and the chrome around them. */
+export interface ChartPalette {
+  speed: string
+  recorded: string
+  accel: string
+  hr: string
+  rest: string
+  effort: string
+  effortBorder: string
+  effortArea: string
+  title: string
+  label: string
+  axis: string
+  grid: string
+  tooltipBg: string
+  tooltipBorder: string
+  tooltipText: string
+  brushFill: string
+  brushBorder: string
+}
+
+export const CHART_PALETTES: Record<Theme, ChartPalette> = {
+  light: {
+    speed: '#1565c0',
+    recorded: '#8c959f',
+    accel: '#6a1b9a',
+    hr: '#c62828',
+    rest: 'rgba(110, 118, 129, 0.15)',
+    effort: '#f57c00',
+    effortBorder: '#ffffff',
+    effortArea: 'rgba(245, 124, 0, 0.1)',
+    title: '#5f6d65',
+    label: '#5f6d65',
+    axis: '#b7c2ba',
+    grid: '#e3e8e4',
+    tooltipBg: '#ffffff',
+    tooltipBorder: '#d9e0da',
+    tooltipText: '#1b2620',
+    brushFill: 'rgba(29, 95, 191, 0.12)',
+    brushBorder: 'rgba(29, 95, 191, 0.7)',
+  },
+  dark: {
+    speed: '#6ea4ff',
+    recorded: '#7d8a83',
+    accel: '#c39bff',
+    hr: '#ff7b72',
+    rest: 'rgba(200, 212, 205, 0.09)',
+    effort: '#ffa040',
+    effortBorder: '#151d19',
+    effortArea: 'rgba(255, 160, 64, 0.14)',
+    title: '#95a49b',
+    label: '#95a49b',
+    axis: '#3b4841',
+    grid: '#232d28',
+    tooltipBg: '#1b2520',
+    tooltipBorder: '#3b4841',
+    tooltipText: '#e3ebe5',
+    brushFill: 'rgba(110, 164, 255, 0.16)',
+    brushBorder: 'rgba(110, 164, 255, 0.75)',
+  },
+}
+
+const LIGHT = CHART_PALETTES.light
 const UNTYPED_SEGMENT = '#90a4ae'
 
 type Value = number | null | undefined
@@ -72,8 +135,8 @@ export function pauseRanges(series: Pick<SessionSeries, 't' | 'inPause'>): [numb
 }
 
 /** Rest shading for a chart's markArea. */
-function restAreas(series: Pick<SessionSeries, 't' | 'inPause'>) {
-  return pauseRanges(series).map(([from, to]) => [{ xAxis: from, itemStyle: { color: COLORS.rest } }, { xAxis: to }])
+function restAreas(series: Pick<SessionSeries, 't' | 'inPause'>, palette: ChartPalette) {
+  return pauseRanges(series).map(([from, to]) => [{ xAxis: from, itemStyle: { color: palette.rest } }, { xAxis: to }])
 }
 
 /** Colour of a segment: its drill type's, or neutral when untyped. */
@@ -103,7 +166,17 @@ function tooltipFormatter(series: Pick<SessionSeries, 't' | 'inPause'>, unit: st
   }
 }
 
+/** Tooltip box in the theme's colours. */
+export function tooltipChrome(palette: ChartPalette) {
+  return {
+    backgroundColor: palette.tooltipBg,
+    borderColor: palette.tooltipBorder,
+    textStyle: { fontFamily: CHART_FONT, color: palette.tooltipText },
+  }
+}
+
 interface BaseOptions {
+  palette: ChartPalette
   series: Pick<SessionSeries, 't' | 'inPause'>
   lastT: number
   title: string
@@ -112,21 +185,23 @@ interface BaseOptions {
   withSlider: boolean
 }
 
-function baseOption({ series, lastT, title, unit, decimals, withSlider }: BaseOptions): EChartsCoreOption {
+function baseOption({ palette, series, lastT, title, unit, decimals, withSlider }: BaseOptions): EChartsCoreOption {
   return {
     animation: false,
     ...CHART_TEXT,
-    title: { text: title, left: PLOT_MARGIN.left, top: 0, textStyle: { fontFamily: CHART_FONT, fontSize: 13, fontWeight: 600, color: '#59636e' } },
+    title: { text: title, left: PLOT_MARGIN.left, top: 0, textStyle: { fontFamily: CHART_FONT, fontSize: 13, fontWeight: 600, color: palette.title } },
     grid: { ...PLOT_MARGIN, top: 24, bottom: withSlider ? 56 : 22 },
-    tooltip: { trigger: 'axis', axisPointer: { type: 'line' }, textStyle: { fontFamily: CHART_FONT }, formatter: tooltipFormatter(series, unit, decimals) },
+    tooltip: { ...tooltipChrome(palette), trigger: 'axis', axisPointer: { type: 'line' }, formatter: tooltipFormatter(series, unit, decimals) },
     xAxis: {
       type: 'value',
       min: 0,
       max: lastT,
-      axisLabel: { formatter: (t: number) => duration(t), hideOverlap: true },
+      axisLabel: { formatter: (t: number) => duration(t), hideOverlap: true, color: palette.label },
+      axisLine: { lineStyle: { color: palette.axis } },
+      axisTick: { lineStyle: { color: palette.axis } },
       splitLine: { show: false },
     },
-    yAxis: { type: 'value', splitNumber: 3, axisLabel: { formatter: (v: number) => `${v}` } },
+    yAxis: { type: 'value', splitNumber: 3, axisLabel: { formatter: (v: number) => `${v}`, color: palette.label }, splitLine: { lineStyle: { color: palette.grid } } },
     // Dragging selects a window (spec 10.2); the wheel and the slider zoom.
     brush: {
       xAxisIndex: 'all',
@@ -134,12 +209,24 @@ function baseOption({ series, lastT, title, unit, decimals, withSlider }: BaseOp
       brushMode: 'single',
       transformable: false,
       removeOnClick: false,
-      brushStyle: { borderWidth: 1, color: 'rgba(21, 101, 192, 0.12)', borderColor: 'rgba(21, 101, 192, 0.7)' },
+      brushStyle: { borderWidth: 1, color: palette.brushFill, borderColor: palette.brushBorder },
       outOfBrush: { colorAlpha: 1 },
     },
     dataZoom: [
       { type: 'inside', xAxisIndex: 0, filterMode: 'none' },
-      ...(withSlider ? [{ type: 'slider', xAxisIndex: 0, filterMode: 'none', height: 18, bottom: 8 }] : []),
+      ...(withSlider
+        ? [{
+            type: 'slider',
+            xAxisIndex: 0,
+            filterMode: 'none',
+            height: 18,
+            bottom: 8,
+            borderColor: palette.axis,
+            fillerColor: palette.brushFill,
+            textStyle: { color: palette.label },
+            dataBackground: { lineStyle: { color: palette.axis }, areaStyle: { color: palette.grid } },
+          }]
+        : []),
     ],
   }
 }
@@ -160,6 +247,7 @@ function line(name: string, data: [number, number | null][], color: string, widt
 }
 
 export interface SpeedChartData {
+  palette?: ChartPalette
   series: SessionSeries
   efforts: Effort[]
   segments: Segment[]
@@ -171,13 +259,13 @@ export interface SpeedChartData {
  * Smoothed speed with the recorded speed as a faint line, rest shaded grey, segments as bands in their drill type's
  * colour, and a marker at the peak of every effort (spec 10.2).
  */
-export function speedChartOption({ series, efforts, segments, drillTypes, lastT }: SpeedChartData): EChartsCoreOption {
+export function speedChartOption({ palette = LIGHT, series, efforts, segments, drillTypes, lastT }: SpeedChartData): EChartsCoreOption {
   const bands = segments.map((segment) => [
     {
       name: segmentLabel(segment, drillTypes),
       xAxis: segment.startT,
       itemStyle: { color: segmentColor(segment, drillTypes), opacity: 0.12 },
-      label: { position: 'insideTopLeft', fontSize: 11, color: '#59636e' },
+      label: { position: 'insideTopLeft', fontSize: 11, fontFamily: CHART_FONT, color: palette.label },
     },
     { xAxis: segment.endT },
   ])
@@ -189,15 +277,15 @@ export function speedChartOption({ series, efforts, segments, drillTypes, lastT 
     meanSpeedFirst3s: effort.metrics.meanSpeedFirst3s,
   }))
   return {
-    ...baseOption({ series, lastT, title: 'Speed (km/h)', unit: 'km/h', decimals: 1, withSlider: false }),
+    ...baseOption({ palette, series, lastT, title: 'Speed (km/h)', unit: 'km/h', decimals: 1, withSlider: false }),
     series: [
       {
-        ...line('Speed', points(series.t, series.speed, MPS_TO_KMH), COLORS.speed),
-        markArea: { silent: true, data: [...restAreas(series), ...bands] },
+        ...line('Speed', points(series.t, series.speed, MPS_TO_KMH), palette.speed),
+        markArea: { silent: true, data: [...restAreas(series, palette), ...bands] },
         markPoint: {
           symbol: 'circle',
           symbolSize: 9,
-          itemStyle: { color: '#f57c00', borderColor: '#fff', borderWidth: 1 },
+          itemStyle: { color: palette.effort, borderColor: palette.effortBorder, borderWidth: 1 },
           label: { show: false },
           tooltip: {
             trigger: 'item',
@@ -209,16 +297,16 @@ export function speedChartOption({ series, efforts, segments, drillTypes, lastT 
         },
       },
       // Under the smoothed speed, which it would otherwise wash out.
-      { ...line('Recorded speed', recordedSpeedPoints(series), COLORS.recorded, 1, 0.5), z: 1 },
+      { ...line('Recorded speed', recordedSpeedPoints(series), palette.recorded, 1, 0.5), z: 1 },
     ],
   }
 }
 
 /** GPS acceleration, derived from 1 Hz speed: a comparative indicator only (spec 4.3). */
-export function accelChartOption(series: SessionSeries, lastT: number): EChartsCoreOption {
+export function accelChartOption(series: SessionSeries, lastT: number, palette: ChartPalette = LIGHT): EChartsCoreOption {
   return {
-    ...baseOption({ series, lastT, title: 'GPS acceleration (m/s²)', unit: 'm/s²', decimals: 2, withSlider: false }),
-    series: [{ ...line('GPS acceleration', points(series.t, series.accel), COLORS.accel, 1.2), markArea: { silent: true, data: restAreas(series) } }],
+    ...baseOption({ palette, series, lastT, title: 'GPS acceleration (m/s²)', unit: 'm/s²', decimals: 2, withSlider: false }),
+    series: [{ ...line('GPS acceleration', points(series.t, series.accel), palette.accel, 1.2), markArea: { silent: true, data: restAreas(series, palette) } }],
   }
 }
 
@@ -258,11 +346,11 @@ export function pointerTime(event: unknown): number | null {
 }
 
 /** Heart rate; carries the zoom slider of the whole group. */
-export function heartRateChartOption(series: SessionSeries, lastT: number): EChartsCoreOption {
+export function heartRateChartOption(series: SessionSeries, lastT: number, palette: ChartPalette = LIGHT): EChartsCoreOption {
   return {
-    ...baseOption({ series, lastT, title: 'Heart rate (bpm)', unit: 'bpm', decimals: 0, withSlider: true }),
-    yAxis: { type: 'value', splitNumber: 3, scale: true },
-    series: [{ ...line('Heart rate', points(series.t, series.hr), COLORS.hr, 1.2), markArea: { silent: true, data: restAreas(series) } }],
+    ...baseOption({ palette, series, lastT, title: 'Heart rate (bpm)', unit: 'bpm', decimals: 0, withSlider: true }),
+    yAxis: { type: 'value', splitNumber: 3, scale: true, axisLabel: { color: palette.label }, splitLine: { lineStyle: { color: palette.grid } } },
+    series: [{ ...line('Heart rate', points(series.t, series.hr), palette.hr, 1.2), markArea: { silent: true, data: restAreas(series, palette) } }],
   }
 }
 
@@ -270,7 +358,7 @@ export function heartRateChartOption(series: SessionSeries, lastT: number): ECha
  * The close-up of one effort in its drawer (spec 10.2): speed and GPS acceleration from 3 s before its start to 3 s
  * after its end, with the effort shaded.
  */
-export function effortChartOption(series: SessionSeries, effort: Effort): EChartsCoreOption {
+export function effortChartOption(series: SessionSeries, effort: Effort, palette: ChartPalette = LIGHT): EChartsCoreOption {
   const from = Math.max(series.t[0] ?? 0, effort.startT - 3)
   const to = Math.min(series.t[series.t.length - 1] ?? 0, effort.endT + 3)
   const inRange = (data: [number, number | null][]) => data.filter(([t]) => t >= from && t <= to)
@@ -280,8 +368,8 @@ export function effortChartOption(series: SessionSeries, effort: Effort): EChart
     ...CHART_TEXT,
     grid: { left: 44, right: 44, top: 30, bottom: 26 },
     tooltip: {
+      ...tooltipChrome(palette),
       trigger: 'axis',
-      textStyle: { fontFamily: CHART_FONT },
       formatter: (params: unknown) => {
         const items = params as { axisValue: number; seriesName: string; marker: string; value: [number, number | null] }[]
         const lines = items
@@ -293,19 +381,26 @@ export function effortChartOption(series: SessionSeries, effort: Effort): EChart
         return [duration(items[0]?.axisValue), ...lines].join('<br/>')
       },
     },
-    xAxis: { type: 'value', min: from, max: to, minInterval: 1, axisLabel: { formatter: (t: number) => duration(t), hideOverlap: true } },
+    xAxis: {
+      type: 'value',
+      min: from,
+      max: to,
+      minInterval: 1,
+      axisLabel: { formatter: (t: number) => duration(t), hideOverlap: true, color: palette.label },
+      axisLine: { lineStyle: { color: palette.axis } },
+    },
     yAxis: [
-      { type: 'value', name: 'km/h', nameTextStyle: { color: COLORS.speed }, splitNumber: 3 },
-      { type: 'value', name: 'm/s² (GPS)', nameTextStyle: { color: COLORS.accel }, splitNumber: 3, splitLine: { show: false } },
+      { type: 'value', name: 'km/h', nameTextStyle: { color: palette.speed }, splitNumber: 3, axisLabel: { color: palette.label }, splitLine: { lineStyle: { color: palette.grid } } },
+      { type: 'value', name: 'm/s² (GPS)', nameTextStyle: { color: palette.accel }, splitNumber: 3, axisLabel: { color: palette.label }, splitLine: { show: false } },
     ],
     series: [
       {
-        ...line('Speed', inRange(points(series.t, series.speed, MPS_TO_KMH)), COLORS.speed, 2),
+        ...line('Speed', inRange(points(series.t, series.speed, MPS_TO_KMH)), palette.speed, 2),
         showSymbol: true,
         symbolSize: 4,
-        markArea: { silent: true, data: [[{ xAxis: effort.startT, itemStyle: { color: 'rgba(245, 124, 0, 0.1)' } }, { xAxis: effort.endT }]] },
+        markArea: { silent: true, data: [[{ xAxis: effort.startT, itemStyle: { color: palette.effortArea } }, { xAxis: effort.endT }]] },
       },
-      { ...line('GPS acceleration', inRange(points(series.t, series.accel)), COLORS.accel, 1.5), yAxisIndex: 1 },
+      { ...line('GPS acceleration', inRange(points(series.t, series.accel)), palette.accel, 1.5), yAxisIndex: 1 },
     ],
   }
 }

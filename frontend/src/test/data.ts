@@ -160,7 +160,7 @@ export function geozone(overrides: Partial<Geozone> = {}): Geozone {
 }
 
 export function uiConfig(): components['schemas']['UiConfig'] {
-  return { map: { vectorStyleUrl: 'https://tiles.openfreemap.org/styles/liberty', satellite: null } }
+  return { map: { vectorStyleUrl: 'https://tiles.openfreemap.org/styles/liberty', vectorStyleUrlDark: 'https://tiles.openfreemap.org/styles/dark', satellite: null } }
 }
 
 export function drillTypeStats(sessions: { id: string; startTime: string; surface: 'GRASS' | 'SAND'; peakBest: number | null }[]) {

@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController
 data class MapProperties(
     /** MapLibre style of the default vector base map. */
     val vectorStyleUrl: String = "https://tiles.openfreemap.org/styles/liberty",
+    /** The vector base map in the dark theme. */
+    val vectorStyleUrlDark: String = "https://tiles.openfreemap.org/styles/dark",
     val satellite: Satellite = Satellite(),
 ) {
     data class Satellite(
@@ -33,6 +35,7 @@ data class MapProperties(
 
     fun toConfig() = MapConfig(
         vectorStyleUrl = vectorStyleUrl,
+        vectorStyleUrlDark = vectorStyleUrlDark,
         satellite = satellite.takeIf { it.tilesUrl.isNotBlank() }?.let {
             SatelliteConfig(it.tilesUrl, it.attribution, it.maxZoom, it.tileSize)
         },
@@ -44,6 +47,7 @@ data class UiConfig(val map: MapConfig)
 
 data class MapConfig(
     val vectorStyleUrl: String,
+    val vectorStyleUrlDark: String,
     /** Null when no satellite tiles are configured. */
     val satellite: SatelliteConfig?,
 )

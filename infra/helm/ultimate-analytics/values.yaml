@@ -32,6 +32,7 @@ map:
   # Base maps of the frontend (app.map.*); empty values keep the defaults of application.yml (OpenFreeMap, no
   # satellite).
   vectorStyleUrl: ""
+  vectorStyleUrlDark: ""
   satellite:
     # XYZ raster tile URL with {z}/{x}/{y}, usually with a provider key; empty: no satellite base map
     tilesUrl: ""

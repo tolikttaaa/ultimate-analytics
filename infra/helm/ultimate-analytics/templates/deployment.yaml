@@ -36,6 +36,10 @@ spec:
             - name: APP_MAP_VECTOR_STYLE_URL
               value: {{ . | quote }}
             {{- end }}
+            {{- with .Values.map.vectorStyleUrlDark }}
+            - name: APP_MAP_VECTOR_STYLE_URL_DARK
+              value: {{ . | quote }}
+            {{- end }}
             {{- with .Values.map.satellite.tilesUrl }}
             - name: APP_MAP_SATELLITE_TILES_URL
               value: {{ . | quote }}

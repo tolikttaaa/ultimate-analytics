@@ -48,6 +48,39 @@
   color-scheme: light;
 }
 
+/* Dark: the pitch at night. The same names, so every rule below works in both themes. */
+:root[data-theme='dark'] {
+  --bg: #0e1411;
+  --surface: #151d19;
+  --surface-2: #1b2520;
+  --ink: #e3ebe5;
+  --muted: #95a49b;
+  --line: #27322c;
+  --line-strong: #3b4841;
+  --accent: #6ea4ff;
+  --accent-ink: #0b1424;
+  --accent-soft: #1a2a45;
+  --danger: #ff8f85;
+  --danger-soft: #3b1e1b;
+  --warning-ink: #ffcf87;
+  --warning-soft: #392a11;
+  --success-ink: #8fd69a;
+  --success-soft: #16301c;
+  --grass: #74c47a;
+  --grass-soft: #17301b;
+  --sand: #f2b33d;
+  --sand-soft: #392b10;
+  --sand-ink: #f6c55f;
+  --unknown: #8c959f;
+  --unknown-soft: #222c27;
+  --activity: #c9d4cd;
+  --rest: #2e3933;
+  --overlay-shadow: 0 12px 32px rgb(0 0 0 / 55%), 0 2px 6px rgb(0 0 0 / 35%);
+  --backdrop: rgb(0 0 0 / 55%);
+
+  color-scheme: dark;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -168,6 +201,30 @@ h2 {
   align-items: center;
   gap: 16px;
   margin-left: auto;
+}
+
+.theme-switch {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+
+.theme-switch button {
+  padding: 3px 10px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.theme-switch button[aria-pressed='true'] {
+  background: var(--surface-2);
+  color: var(--ink);
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 .app-version {
@@ -1202,4 +1259,28 @@ input[type='color'] {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
+}
+
+/* MapLibre's own controls in the dark theme. */
+:root[data-theme='dark'] .maplibregl-ctrl-group {
+  background: var(--surface-2);
+  box-shadow: 0 0 0 1px var(--line-strong);
+}
+
+:root[data-theme='dark'] .maplibregl-ctrl-group button + button {
+  border-top-color: var(--line-strong);
+}
+
+:root[data-theme='dark'] .maplibregl-ctrl button .maplibregl-ctrl-icon,
+:root[data-theme='dark'] .maplibregl-ctrl-attrib-button {
+  filter: invert(0.88);
+}
+
+:root[data-theme='dark'] .maplibregl-ctrl.maplibregl-ctrl-attrib {
+  background: rgb(21 29 25 / 85%);
+  color: var(--muted);
+}
+
+:root[data-theme='dark'] .maplibregl-ctrl-attrib a {
+  color: var(--ink);
 }

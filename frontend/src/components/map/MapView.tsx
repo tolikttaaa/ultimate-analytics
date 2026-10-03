@@ -4,6 +4,7 @@ import { type FitBoundsOptions, type LngLatBoundsLike, type LngLatLike, Map, Nav
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { MapConfig } from '../../api/types'
+import { useTheme } from '../../theme'
 import { type BaseMap, baseMapStyle } from './baseMap'
 
 setWorkerUrl(workerUrl)
@@ -29,16 +30,17 @@ export function MapView(props: Props) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<Map | null>(null)
   const [base, setBase] = useState<BaseMap>('map')
-  const latest = useRef({ onStyleLoad, onMap, bounds, fitBoundsOptions, center, zoom, base })
+  const { theme } = useTheme()
+  const latest = useRef({ onStyleLoad, onMap, bounds, fitBoundsOptions, center, zoom, base, theme })
 
   useLayoutEffect(() => {
-    latest.current = { onStyleLoad, onMap, bounds, fitBoundsOptions, center, zoom, base }
+    latest.current = { onStyleLoad, onMap, bounds, fitBoundsOptions, center, zoom, base, theme }
   })
 
   useEffect(() => {
     const instance = new Map({
       container: container.current!,
-      style: baseMapStyle(config, latest.current.base),
+      style: baseMapStyle(config, latest.current.base, latest.current.theme),
       bounds: latest.current.bounds,
       fitBoundsOptions: latest.current.fitBoundsOptions,
       center: latest.current.center,
@@ -56,9 +58,14 @@ export function MapView(props: Props) {
     }
   }, [config])
 
+  // A new theme brings its base map; the overlays come back with `style.load`.
+  useEffect(() => {
+    map.current?.setStyle(baseMapStyle(config, latest.current.base, theme), { diff: false })
+  }, [config, theme])
+
   function show(next: BaseMap) {
     setBase(next)
-    map.current?.setStyle(baseMapStyle(config, next), { diff: false })
+    map.current?.setStyle(baseMapStyle(config, next, theme), { diff: false })
   }
 
   return (

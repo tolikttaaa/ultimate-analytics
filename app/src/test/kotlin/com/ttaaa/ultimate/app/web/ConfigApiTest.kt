@@ -15,6 +15,7 @@ class ConfigApiTest : IntegrationTest() {
 
         config.statusCode shouldBe HttpStatus.OK
         config.json["map"]["vectorStyleUrl"].asString() shouldBe "https://tiles.openfreemap.org/styles/liberty"
+        config.json["map"]["vectorStyleUrlDark"].asString() shouldBe "https://tiles.openfreemap.org/styles/dark"
         config.json["map"]["satellite"].isNull shouldBe true
     }
 }

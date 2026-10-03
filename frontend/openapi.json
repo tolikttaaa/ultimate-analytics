@@ -1551,9 +1551,12 @@
           },
           "vectorStyleUrl" : {
             "type" : "string"
+          },
+          "vectorStyleUrlDark" : {
+            "type" : "string"
           }
         },
-        "required" : [ "vectorStyleUrl" ]
+        "required" : [ "vectorStyleUrl", "vectorStyleUrlDark" ]
       },
       "MeanAndBest" : {
         "type" : "object",

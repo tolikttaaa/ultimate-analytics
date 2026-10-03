@@ -1,6 +1,6 @@
 import type { EChartsCoreOption } from 'echarts/core'
 import type { Schemas, Surface, WindowMetrics } from '../../api/types'
-import { CHART_FONT, CHART_TEXT } from './sessionChartOptions'
+import { CHART_FONT, CHART_PALETTES, CHART_TEXT, type ChartPalette, tooltipChrome } from './sessionChartOptions'
 
 type SessionRow = Schemas['DrillTypeSessionRow']
 
@@ -35,7 +35,12 @@ const day = (iso: string) => iso.slice(0, 10)
  * One point per session in time, coloured by its surface, joined by a line in the drill type's colour. Sessions
  * without a value (e.g. no efforts) are left out.
  */
-export function trendChartOption(rows: SessionRow[], metric: TrendMetric, color: string): EChartsCoreOption {
+export function trendChartOption(
+  rows: SessionRow[],
+  metric: TrendMetric,
+  color: string,
+  palette: ChartPalette = CHART_PALETTES.light,
+): EChartsCoreOption {
   const points = rows.flatMap((row) => {
     const value = metric.value(row.metrics)
     return value == null ? [] : [{
@@ -53,10 +58,10 @@ export function trendChartOption(rows: SessionRow[], metric: TrendMetric, color:
     animation: false,
     ...CHART_TEXT,
     grid: { left: 56, right: 24, top: 36, bottom: 32 },
-    title: { text: `${metric.label} (${metric.unit})`, left: 56, top: 4, textStyle: { fontFamily: CHART_FONT, fontSize: 13, fontWeight: 600, color: '#59636e' } },
+    title: { text: `${metric.label} (${metric.unit})`, left: 56, top: 4, textStyle: { fontFamily: CHART_FONT, fontSize: 13, fontWeight: 600, color: palette.title } },
     tooltip: {
+      ...tooltipChrome(palette),
       trigger: 'item',
-      textStyle: { fontFamily: CHART_FONT },
       formatter: (params: { data: (typeof points)[number] }) => {
         const { value, surface, segments } = params.data
         return `${day(value[0] as string)}, ${SURFACE_NAMES[surface].toLowerCase()}<br/>${metric.label}: <b>${value[1]} ${metric.unit}</b>` +
@@ -64,8 +69,22 @@ export function trendChartOption(rows: SessionRow[], metric: TrendMetric, color:
       },
     },
     // Padding keeps the points off the plot edges.
-    xAxis: { type: 'time', ...range, boundaryGap: ['4%', '4%'], axisLabel: { formatter: '{yyyy}-{MM}-{dd}', hideOverlap: true } },
-    yAxis: { type: 'value', scale: true, splitNumber: 4, boundaryGap: ['10%', '10%'] },
+    xAxis: {
+      type: 'time',
+      ...range,
+      boundaryGap: ['4%', '4%'],
+      axisLabel: { formatter: '{yyyy}-{MM}-{dd}', hideOverlap: true, color: palette.label },
+      axisLine: { lineStyle: { color: palette.axis } },
+      splitLine: { show: false },
+    },
+    yAxis: {
+      type: 'value',
+      scale: true,
+      splitNumber: 4,
+      boundaryGap: ['10%', '10%'],
+      axisLabel: { color: palette.label },
+      splitLine: { lineStyle: { color: palette.grid } },
+    },
     series: [{
       name: metric.label,
       type: 'line',

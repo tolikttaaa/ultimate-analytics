@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { DrillType, Effort, Geozone, MapConfig, Segment, SessionSeries, Surface } from '../../api/types'
 import type { Cursor } from '../../pages/session/cursor'
 import type { TimeWindow } from '../../pages/session/timeWindow'
+import { type Theme, useTheme } from '../../theme'
 import { segmentColor } from '../charts/sessionChartOptions'
 import { cursorPoint, effortStarts, geozoneOutline, segmentTracks, trackBounds, trackLines } from './geo'
 import { MapView } from './MapView'
@@ -23,8 +24,11 @@ interface Props {
 
 /* As the surface chips. */
 const SURFACE_COLORS: Record<Surface, string> = { GRASS: '#2e7d32', SAND: '#f59e0b', UNKNOWN: '#8c959f' }
-const ACCENT = '#1565c0'
-const TRACK = '#59636e'
+/** Overlay colours that depend on the base map's theme. */
+const TRACK_COLORS: Record<Theme, { track: string; casing: string; casingOpacity: number; accent: string }> = {
+  light: { track: '#59636e', casing: '#ffffff', casingOpacity: 0.75, accent: '#1565c0' },
+  dark: { track: '#aab7af', casing: '#0e1411', casingOpacity: 0.6, accent: '#6ea4ff' },
+}
 const EMPTY: FeatureCollection = { type: 'FeatureCollection', features: [] }
 const FIT = { padding: 32, maxZoom: 18, duration: 400 }
 
@@ -47,10 +51,11 @@ export function SessionMap({ config, series, efforts, segments, drillTypes, time
     geozone: (geozone && geozoneOutline(geozone.shape)) ?? EMPTY,
   }), [series, segments, drillTypes, efforts, timeWindow, geozone, from, to])
   const surfaceColor = SURFACE_COLORS[geozone?.surface ?? 'UNKNOWN']
-  const latest = useRef({ data, surfaceColor })
+  const { theme } = useTheme()
+  const latest = useRef({ data, surfaceColor, theme })
 
   useLayoutEffect(() => {
-    latest.current = { data, surfaceColor }
+    latest.current = { data, surfaceColor, theme }
   })
 
   // Data changes go straight into the sources; the layers stay.
@@ -74,11 +79,11 @@ export function SessionMap({ config, series, efforts, segments, drillTypes, time
   if (!bounds) return <div className="map-placeholder">No GPS positions in this session</div>
 
   function addOverlays(target: Map) {
-    const { data: current, surfaceColor: color } = latest.current
+    const { data: current, surfaceColor: color, theme: mapTheme } = latest.current
     for (const [id, value] of Object.entries({ ...current, cursor: cursorPoint(series, cursor.get()) })) {
       target.addSource(id, { type: 'geojson', data: value })
     }
-    for (const layer of overlayLayers(color)) target.addLayer(layer)
+    for (const layer of overlayLayers(color, mapTheme)) target.addLayer(layer)
   }
 
   return (
@@ -104,7 +109,8 @@ function source(map: Map | null, id: string): GeoJSONSource | undefined {
 const ROUND = { 'line-join': 'round', 'line-cap': 'round' } as const
 
 /** Bottom to top: geozone, window halo, track casing, track, drill-coloured segments, effort starts, cursor. */
-function overlayLayers(surfaceColor: string): LayerSpecification[] {
+function overlayLayers(surfaceColor: string, theme: Theme): LayerSpecification[] {
+  const { track, casing, casingOpacity, accent } = TRACK_COLORS[theme]
   return [
     { id: 'geozone-fill', type: 'fill', source: 'geozone', paint: { 'fill-color': surfaceColor, 'fill-opacity': 0.12 } },
     {
@@ -114,10 +120,10 @@ function overlayLayers(surfaceColor: string): LayerSpecification[] {
       paint: { 'line-color': surfaceColor, 'line-width': 1.5, 'line-dasharray': [2, 1.5] },
     },
     // A halo under the track marks the window without hiding the drill colours.
-    { id: 'window', type: 'line', source: 'window', layout: ROUND, paint: { 'line-color': ACCENT, 'line-width': 9, 'line-opacity': 0.35 } },
+    { id: 'window', type: 'line', source: 'window', layout: ROUND, paint: { 'line-color': accent, 'line-width': 9, 'line-opacity': 0.35 } },
     // A light casing keeps the track visible on dark imagery.
-    { id: 'track-casing', type: 'line', source: 'track', layout: ROUND, paint: { 'line-color': '#ffffff', 'line-width': 3, 'line-opacity': 0.75 } },
-    { id: 'track', type: 'line', source: 'track', layout: ROUND, paint: { 'line-color': TRACK, 'line-width': 1.5 } },
+    { id: 'track-casing', type: 'line', source: 'track', layout: ROUND, paint: { 'line-color': casing, 'line-width': 3, 'line-opacity': casingOpacity } },
+    { id: 'track', type: 'line', source: 'track', layout: ROUND, paint: { 'line-color': track, 'line-width': 1.5 } },
     { id: 'segments', type: 'line', source: 'segments', layout: ROUND, paint: { 'line-color': ['get', 'color'], 'line-width': 2 } },
     {
       id: 'efforts',
@@ -130,7 +136,7 @@ function overlayLayers(surfaceColor: string): LayerSpecification[] {
       id: 'cursor',
       type: 'circle',
       source: 'cursor',
-      paint: { 'circle-radius': 6, 'circle-color': ACCENT, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2 },
+      paint: { 'circle-radius': 6, 'circle-color': accent, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2 },
     },
   ]
 }
