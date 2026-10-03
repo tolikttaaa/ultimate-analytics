@@ -112,20 +112,25 @@ describe('speedChartOption', () => {
     ])
   })
 
-  it('marks every effort at its peak and explains it on hover', () => {
+  it('marks every effort at its peak and describes it in the tooltip of its seconds', () => {
     const [marker] = speed.markPoint!.data
     expect(marker.coord).toEqual([3, 21.6])
     expect(marker.effortId).toBe('e1')
-    expect(speed.markPoint!.tooltip.formatter({ data: marker })).toBe(
-      'Effort at 0:03<br/>Peak speed: <b>21.6 km/h</b><br/>First 3 s: <b>18.0 km/h</b>',
-    )
+    // No tooltip of its own: echarts.connect would show the other charts a wrong second.
+    expect((speed.markPoint as unknown as { tooltip: { show: boolean } }).tooltip.show).toBe(false)
+    const at3 = option.tooltip.formatter([{ axisValue: 3, seriesName: 'Speed', marker: '•', value: [3, 21.6] }])
+    expect(at3).toContain('Effort peak: <b>21.6 km/h</b>, first 3 s <b>18.0 km/h</b>')
+    // The effort lasts 1..5: within 2 s of it the tooltip names it.
+    expect(option.tooltip.formatter([{ axisValue: 7, seriesName: 'Speed', marker: '•', value: [7, 0] }])).toContain('Effort peak')
+    expect(option.tooltip.formatter([{ axisValue: 8, seriesName: 'Speed', marker: '•', value: [8, null] }])).not.toContain('Effort')
   })
 
   it('names the activity of the cursor second and lists its values, skipping gaps and other seconds', () => {
     const at = (t: number, seriesName: string, sampleT: number, value: number | null) => ({ axisValue: t, seriesName, marker: '•', value: [sampleT, value] })
     expect(option.tooltip.formatter([at(3, 'Speed', 3, 21.6), at(3, 'Recorded speed', 3, 22.32)]))
-      .toBe('0:03, active<br/>•Speed: <b>21.6 km/h</b><br/>•Recorded speed: <b>22.3 km/h</b>')
-    expect(option.tooltip.formatter([at(6, 'Speed', 6, 0), at(6, 'Recorded speed', 5, 7.6)])).toBe('0:06, rest<br/>•Speed: <b>0.0 km/h</b>')
+      .toMatch(/^0:03, active<br\/>•Speed: <b>21.6 km\/h<\/b><br\/>•Recorded speed: <b>22.3 km\/h<\/b><br\/>.*Effort peak/)
+    expect(option.tooltip.formatter([at(6, 'Speed', 6, 0), at(6, 'Recorded speed', 5, 7.6)])).toMatch(/^0:06, rest<br\/>•Speed: <b>0.0 km\/h<\/b>(<br\/>|$)/)
+    expect(option.tooltip.formatter([at(6, 'Speed', 6, 0), at(6, 'Recorded speed', 5, 7.6)])).not.toContain('Recorded speed')
     expect(option.tooltip.formatter([at(8, 'Speed', 8, null)])).toBe('0:08, no data')
   })
 })

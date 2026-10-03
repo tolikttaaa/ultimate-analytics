@@ -633,3 +633,12 @@ Newest entries at the bottom.
     light one); the session track is light on dark tiles; satellite imagery is the same in both. MapLibre's own
     controls get dark styles.
 - **Alternatives:** ECharts' built-in dark theme (colours not matched to the tokens); following the system only.
+
+## 2026-10-03 — Effort details in the time tooltip (fix)
+
+- **Context:** writing the user guide showed that hovering an effort marker made the acceleration and heart rate
+  charts show a tooltip at a wrong second (marker 25 → 0:24). A marker's own tooltip is an item tooltip, and
+  `echarts.connect` passes it to the other charts by its index, which they read as an index into their own series.
+- **Decision:** effort markers have no tooltip of their own; the time tooltip of the speed chart names the effort under
+  the cursor (its seconds, ±2 s, as a zoomed-out pixel spans seconds) with its peak and first-3-s speed. Time
+  tooltips are passed on by time, so all charts agree. A click on a marker still opens the effort drawer.

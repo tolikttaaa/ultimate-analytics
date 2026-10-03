@@ -151,8 +151,13 @@ export function segmentLabel(segment: Segment, drillTypes: DrillType[]): string 
 
 const ACTIVITY_NAMES: Record<Activity, string> = { active: 'active', rest: 'rest', gap: 'no data' }
 
-/** The time and its activity, then the values of this very second. */
-function tooltipFormatter(series: Pick<SessionSeries, 't' | 'inPause'>, unit: string, decimals: number) {
+/** The time and its activity, then the values of this very second, then anything else about it (`extra`). */
+function tooltipFormatter(
+  series: Pick<SessionSeries, 't' | 'inPause'>,
+  unit: string,
+  decimals: number,
+  extra?: (t: number) => string | null,
+) {
   return (params: unknown) => {
     const items = params as { axisValue: number; seriesName: string; marker: string; value: [number, number | null] }[]
     if (items.length === 0) return ''
@@ -162,7 +167,8 @@ function tooltipFormatter(series: Pick<SessionSeries, 't' | 'inPause'>, unit: st
     const lines = items
       .filter((item) => item.value[1] != null && item.value[0] === t)
       .map((item) => `${item.marker}${item.seriesName}: <b>${(item.value[1] as number).toFixed(decimals)} ${unit}</b>`)
-    return [`${duration(t)}, ${ACTIVITY_NAMES[activity]}`, ...lines].join('<br/>')
+    const more = extra?.(t)
+    return [`${duration(t)}, ${ACTIVITY_NAMES[activity]}`, ...lines, ...(more ? [more] : [])].join('<br/>')
   }
 }
 
@@ -177,6 +183,8 @@ export function tooltipChrome(palette: ChartPalette) {
 
 interface BaseOptions {
   palette: ChartPalette
+  /** More lines for the tooltip of a second. */
+  tooltipExtra?: (t: number) => string | null
   series: Pick<SessionSeries, 't' | 'inPause'>
   lastT: number
   title: string
@@ -185,13 +193,13 @@ interface BaseOptions {
   withSlider: boolean
 }
 
-function baseOption({ palette, series, lastT, title, unit, decimals, withSlider }: BaseOptions): EChartsCoreOption {
+function baseOption({ palette, tooltipExtra, series, lastT, title, unit, decimals, withSlider }: BaseOptions): EChartsCoreOption {
   return {
     animation: false,
     ...CHART_TEXT,
     title: { text: title, left: PLOT_MARGIN.left, top: 0, textStyle: { fontFamily: CHART_FONT, fontSize: 13, fontWeight: 600, color: palette.title } },
     grid: { ...PLOT_MARGIN, top: 24, bottom: withSlider ? 56 : 22 },
-    tooltip: { ...tooltipChrome(palette), trigger: 'axis', axisPointer: { type: 'line' }, formatter: tooltipFormatter(series, unit, decimals) },
+    tooltip: { ...tooltipChrome(palette), trigger: 'axis', axisPointer: { type: 'line' }, formatter: tooltipFormatter(series, unit, decimals, tooltipExtra) },
     xAxis: {
       type: 'value',
       min: 0,
@@ -257,7 +265,7 @@ export interface SpeedChartData {
 
 /**
  * Smoothed speed with the recorded speed as a faint line, rest shaded grey, segments as bands in their drill type's
- * colour, and a marker at the peak of every effort (spec 10.2).
+ * colour, and a marker at the peak of every effort, described in the tooltip of that second (spec 10.2).
  */
 export function speedChartOption({ palette = LIGHT, series, efforts, segments, drillTypes, lastT }: SpeedChartData): EChartsCoreOption {
   const bands = segments.map((segment) => [
@@ -270,14 +278,20 @@ export function speedChartOption({ palette = LIGHT, series, efforts, segments, d
     { xAxis: segment.endT },
   ])
   const markers = efforts.map((effort) => ({
-    name: `Effort at ${duration(effort.peakT)}`,
     coord: [effort.peakT, effort.metrics.peakSpeed * MPS_TO_KMH],
     effortId: effort.id,
-    peakSpeed: effort.metrics.peakSpeed,
-    meanSpeedFirst3s: effort.metrics.meanSpeedFirst3s,
   }))
+  // The effort under the cursor (a zoomed-out pixel spans seconds), in the time tooltip: a marker's own tooltip would
+  // be passed to the connected charts by its index and show them a wrong second.
+  const effortAt = (t: number) => {
+    const effort = efforts.find((candidate) => t >= candidate.startT - 2 && t <= candidate.endT + 2)
+    return effort
+      ? `<span style="color:${palette.effort}">●</span> Effort peak: <b>${speedKmh(effort.metrics.peakSpeed)}</b>, ` +
+        `first 3 s <b>${speedKmh(effort.metrics.meanSpeedFirst3s)}</b>`
+      : null
+  }
   return {
-    ...baseOption({ palette, series, lastT, title: 'Speed (km/h)', unit: 'km/h', decimals: 1, withSlider: false }),
+    ...baseOption({ palette, tooltipExtra: effortAt, series, lastT, title: 'Speed (km/h)', unit: 'km/h', decimals: 1, withSlider: false }),
     series: [
       {
         ...line('Speed', points(series.t, series.speed, MPS_TO_KMH), palette.speed),
@@ -287,12 +301,7 @@ export function speedChartOption({ palette = LIGHT, series, efforts, segments, d
           symbolSize: 9,
           itemStyle: { color: palette.effort, borderColor: palette.effortBorder, borderWidth: 1 },
           label: { show: false },
-          tooltip: {
-            trigger: 'item',
-            formatter: (params: { data: (typeof markers)[number] }) =>
-              `${params.data.name}<br/>Peak speed: <b>${speedKmh(params.data.peakSpeed)}</b>` +
-              `<br/>First 3 s: <b>${speedKmh(params.data.meanSpeedFirst3s)}</b>`,
-          },
+          tooltip: { show: false },
           data: markers,
         },
       },
