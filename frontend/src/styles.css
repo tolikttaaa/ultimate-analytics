@@ -839,3 +839,34 @@ input {
 .trend {
   margin: 20px 0;
 }
+
+/* Next to the zoom buttons: the attribution takes the bottom of a narrow map. */
+.map-controls {
+  position: absolute;
+  z-index: 3;
+  top: 10px;
+  left: 52px;
+}
+
+.map-toggle {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 15%);
+}
+
+.map-toggle button {
+  padding: 4px 10px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.map-toggle button[aria-pressed='true'] {
+  background: var(--color-accent);
+  color: #fff;
+}

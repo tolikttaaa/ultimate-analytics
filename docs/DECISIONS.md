@@ -531,3 +531,18 @@ Newest entries at the bottom.
   - Vitest skips `e2e/`.
 - **Alternatives:** running against the dev stack (would change the user's data); Playwright's `webServer` starting
   `bootRun` (needs a database anyway); several browsers.
+
+## 2026-10-03 — Map track by drill type, window only (backlog)
+
+- **Context:** backlog: thinner map lines, the track coloured by drill type, and the map showing only the selected
+  time frame. The user chose a toggle for the brushed window.
+- **Decision:**
+  - Track 1.5 px grey on a 3 px white casing; each segment's part of the track on top in its drill type's colour
+    (2 px), untyped segments in the strip's neutral grey.
+  - The window is a translucent blue halo under the track, so the drill colours stay readable.
+  - With a window selected, *Whole track / Window only* appears on the map; *Window only* draws only the window's
+    track and effort starts and zooms to them.
+  - Effort starts are white rings with an orange edge, visible on any drill colour.
+  - Map controls sit at the top, next to the zoom buttons: on the narrow session map the attribution covers the
+    bottom.
+- **Alternatives:** following the charts' zoom (not chosen by the user); hiding the window halo in window-only mode.

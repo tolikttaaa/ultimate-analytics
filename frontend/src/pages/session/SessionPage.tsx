@@ -121,6 +121,8 @@ export function SessionPage() {
                   config={config.data.map}
                   series={series.data}
                   efforts={efforts.data}
+                  segments={session.data.segments}
+                  drillTypes={drillTypes.data ?? []}
                   timeWindow={selection}
                   geozone={geozone}
                   cursor={cursor}

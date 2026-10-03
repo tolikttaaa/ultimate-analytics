@@ -1,16 +1,20 @@
 import type { FeatureCollection } from 'geojson'
 import type { GeoJSONSource, LayerSpecification, Map } from 'maplibre-gl'
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import type { Effort, Geozone, MapConfig, SessionSeries, Surface } from '../../api/types'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { DrillType, Effort, Geozone, MapConfig, Segment, SessionSeries, Surface } from '../../api/types'
 import type { Cursor } from '../../pages/session/cursor'
 import type { TimeWindow } from '../../pages/session/timeWindow'
-import { cursorPoint, effortStarts, geozoneOutline, trackBounds, trackLines } from './geo'
+import { segmentColor } from '../charts/sessionChartOptions'
+import { cursorPoint, effortStarts, geozoneOutline, segmentTracks, trackBounds, trackLines } from './geo'
 import { MapView } from './MapView'
 
 interface Props {
   config: MapConfig
   series: SessionSeries
   efforts: Effort[]
+  /** The track of each segment is drawn in its drill type's colour. */
+  segments: Segment[]
+  drillTypes: DrillType[]
   timeWindow: TimeWindow | null
   /** The geozone the session matched, outlined in its surface colour. */
   geozone: Geozone | null
@@ -20,21 +24,28 @@ interface Props {
 /* As the surface chips. */
 const SURFACE_COLORS: Record<Surface, string> = { GRASS: '#2e7d32', SAND: '#f59e0b', UNKNOWN: '#8c959f' }
 const ACCENT = '#1565c0'
+const TRACK = '#59636e'
 const EMPTY: FeatureCollection = { type: 'FeatureCollection', features: [] }
+const FIT = { padding: 32, maxZoom: 18, duration: 400 }
 
 /**
- * The map of the session screen (spec 10.2): the whole track, the time window, effort starts, the charts' cursor
- * and the matched geozone, over the configured base map.
+ * The map of the session screen (spec 10.2): the track, coloured by drill type where segments have one, the time
+ * window as a halo (or alone), effort starts, the charts' cursor and the matched geozone, over the configured base
+ * map.
  */
-export function SessionMap({ config, series, efforts, timeWindow, geozone, cursor }: Props) {
+export function SessionMap({ config, series, efforts, segments, drillTypes, timeWindow, geozone, cursor }: Props) {
   const map = useRef<Map | null>(null)
+  const [windowOnly, setWindowOnly] = useState(false)
   const bounds = useMemo(() => trackBounds(series), [series])
+  // Only the window is drawn when the user asks for it and there is one.
+  const [from, to] = windowOnly && timeWindow ? timeWindow : [-Infinity, Infinity]
   const data = useMemo(() => ({
-    track: trackLines(series),
+    track: trackLines(series, from, to),
+    segments: segmentTracks(series, segments, (segment) => segmentColor(segment, drillTypes), from, to),
     window: timeWindow ? trackLines(series, timeWindow[0], timeWindow[1]) : EMPTY,
-    efforts: effortStarts(series, efforts),
+    efforts: effortStarts(series, efforts.filter((effort) => effort.startT >= from && effort.startT <= to)),
     geozone: (geozone && geozoneOutline(geozone.shape)) ?? EMPTY,
-  }), [series, efforts, timeWindow, geozone])
+  }), [series, segments, drillTypes, efforts, timeWindow, geozone, from, to])
   const surfaceColor = SURFACE_COLORS[geozone?.surface ?? 'UNKNOWN']
   const latest = useRef({ data, surfaceColor })
 
@@ -50,6 +61,12 @@ export function SessionMap({ config, series, efforts, timeWindow, geozone, curso
       map.current.setPaintProperty('geozone-fill', 'fill-color', surfaceColor)
     }
   }, [data, surfaceColor])
+
+  // Switching between the whole track and the window shows what is drawn.
+  useEffect(() => {
+    const shown = Number.isFinite(from) ? trackBounds(series, from, to) : trackBounds(series)
+    if (shown) map.current?.fitBounds(shown as [[number, number], [number, number]], FIT)
+  }, [series, from, to])
 
   useEffect(() => cursor.subscribe(() => source(map.current, 'cursor')?.setData(cursorPoint(series, cursor.get()))),
     [cursor, series])
@@ -70,6 +87,12 @@ export function SessionMap({ config, series, efforts, timeWindow, geozone, curso
       bounds={bounds as [[number, number], [number, number]]}
       onStyleLoad={addOverlays}
       onMap={(instance) => (map.current = instance)}
+      controls={timeWindow && (
+        <div className="map-toggle" role="group" aria-label="Track shown">
+          <button aria-pressed={!windowOnly} onClick={() => setWindowOnly(false)}>Whole track</button>
+          <button aria-pressed={windowOnly} onClick={() => setWindowOnly(true)}>Window only</button>
+        </div>
+      )}
     />
   )
 }
@@ -80,7 +103,7 @@ function source(map: Map | null, id: string): GeoJSONSource | undefined {
 
 const ROUND = { 'line-join': 'round', 'line-cap': 'round' } as const
 
-/** Bottom to top: geozone, track, window, effort starts, cursor. */
+/** Bottom to top: geozone, window halo, track casing, track, drill-coloured segments, effort starts, cursor. */
 function overlayLayers(surfaceColor: string): LayerSpecification[] {
   return [
     { id: 'geozone-fill', type: 'fill', source: 'geozone', paint: { 'fill-color': surfaceColor, 'fill-opacity': 0.12 } },
@@ -88,23 +111,26 @@ function overlayLayers(surfaceColor: string): LayerSpecification[] {
       id: 'geozone-line',
       type: 'line',
       source: 'geozone',
-      paint: { 'line-color': surfaceColor, 'line-width': 2, 'line-dasharray': [2, 1.5] },
+      paint: { 'line-color': surfaceColor, 'line-width': 1.5, 'line-dasharray': [2, 1.5] },
     },
+    // A halo under the track marks the window without hiding the drill colours.
+    { id: 'window', type: 'line', source: 'window', layout: ROUND, paint: { 'line-color': ACCENT, 'line-width': 9, 'line-opacity': 0.35 } },
     // A light casing keeps the track visible on dark imagery.
-    { id: 'track-casing', type: 'line', source: 'track', layout: ROUND, paint: { 'line-color': '#ffffff', 'line-width': 4.5, 'line-opacity': 0.8 } },
-    { id: 'track', type: 'line', source: 'track', layout: ROUND, paint: { 'line-color': '#455a64', 'line-width': 2 } },
-    { id: 'window', type: 'line', source: 'window', layout: ROUND, paint: { 'line-color': ACCENT, 'line-width': 5 } },
+    { id: 'track-casing', type: 'line', source: 'track', layout: ROUND, paint: { 'line-color': '#ffffff', 'line-width': 3, 'line-opacity': 0.75 } },
+    { id: 'track', type: 'line', source: 'track', layout: ROUND, paint: { 'line-color': TRACK, 'line-width': 1.5 } },
+    { id: 'segments', type: 'line', source: 'segments', layout: ROUND, paint: { 'line-color': ['get', 'color'], 'line-width': 2 } },
     {
       id: 'efforts',
       type: 'circle',
       source: 'efforts',
-      paint: { 'circle-radius': 4.5, 'circle-color': '#f57c00', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1.5 },
+      // Rings, not dots: they stay visible on tracks of any drill colour.
+      paint: { 'circle-radius': 3.5, 'circle-color': '#ffffff', 'circle-stroke-color': '#f57c00', 'circle-stroke-width': 2 },
     },
     {
       id: 'cursor',
       type: 'circle',
       source: 'cursor',
-      paint: { 'circle-radius': 7, 'circle-color': ACCENT, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2 },
+      paint: { 'circle-radius': 6, 'circle-color': ACCENT, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2 },
     },
   ]
 }

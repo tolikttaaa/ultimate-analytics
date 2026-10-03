@@ -1,5 +1,5 @@
 import type { Feature, FeatureCollection, MultiLineString, Point, Polygon, Position } from 'geojson'
-import type { Effort, GeozoneShape, SessionSeries } from '../../api/types'
+import type { Effort, GeozoneShape, Segment, SessionSeries } from '../../api/types'
 
 /*
  * GeoJSON for the maps, built from the series of the API: drawing only, no metrics (spec 7.2). Positions are
@@ -54,6 +54,29 @@ export function trackLines(series: Track, from = -Infinity, to = Infinity): Feat
   })
   if (current.length > 1) lines.push(current)
   return { type: 'Feature', properties: {}, geometry: { type: 'MultiLineString', coordinates: lines } }
+}
+
+/**
+ * Each segment's part of the track, carrying the segment's colour, cut to [from, to]; lines of segments that do not
+ * reach into it are left out.
+ */
+export function segmentTracks(
+  series: Track,
+  segments: Segment[],
+  colorOf: (segment: Segment) => string,
+  from = -Infinity,
+  to = Infinity,
+): FeatureCollection<MultiLineString> {
+  return {
+    type: 'FeatureCollection',
+    features: segments.flatMap((segment) => {
+      const start = Math.max(segment.startT, from)
+      const end = Math.min(segment.endT, to)
+      if (start >= end) return []
+      const line = trackLines(series, start, end)
+      return line.geometry.coordinates.length > 0 ? [{ ...line, properties: { segmentId: segment.id, color: colorOf(segment) } }] : []
+    }),
+  }
 }
 
 /** A point at the start of every effort with a position. */

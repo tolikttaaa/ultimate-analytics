@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { effort } from '../../test/data'
-import { cursorPoint, effortStarts, geozoneOutline, MAX_LINE_POSITIONS, positionAt, trackBounds, trackLines } from './geo'
+import { effort, segment } from '../../test/data'
+import { cursorPoint, effortStarts, geozoneOutline, MAX_LINE_POSITIONS, positionAt, segmentTracks, trackBounds, trackLines } from './geo'
 
 /** Six seconds heading east, with a gap at t = 3. */
 const series = {
@@ -29,6 +29,26 @@ describe('trackLines', () => {
   it('draws a window from the position at its start to the one at its end', () => {
     expect(trackLines(series, 1, 2).geometry.coordinates).toEqual([[[33.1001, 34.7], [33.1002, 34.7]]])
     expect(trackLines(series, 2, 4).geometry.coordinates).toEqual([])
+  })
+})
+
+describe('segmentTracks', () => {
+  const segments = [segment({ id: 'a', startT: 0, endT: 2 }), segment({ id: 'b', startT: 4, endT: 5, drillTypeId: null })]
+  const colorOf = (s: { id: string }) => (s.id === 'a' ? '#e65100' : '#90a4ae')
+
+  it('draws the part of the track of each segment in its colour', () => {
+    const features = segmentTracks(series, segments, colorOf).features
+    expect(features.map((feature) => [feature.properties, feature.geometry.coordinates])).toEqual([
+      [{ segmentId: 'a', color: '#e65100' }, [[[33.1, 34.7], [33.1001, 34.7], [33.1002, 34.7]]]],
+      [{ segmentId: 'b', color: '#90a4ae' }, [[[33.1004, 34.7], [33.1005, 34.7001]]]],
+    ])
+  })
+
+  it('cuts the segments to a window and leaves out those outside it', () => {
+    const features = segmentTracks(series, segments, colorOf, 1, 2).features
+    expect(features.map((feature) => [feature.properties?.segmentId, feature.geometry.coordinates])).toEqual([
+      ['a', [[[33.1001, 34.7], [33.1002, 34.7]]]],
+    ])
   })
 })
 
