@@ -3,6 +3,7 @@ import type { ExpressionSpecification, GeoJSONSource, Map } from 'maplibre-gl'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Geozone, MapConfig } from '../../api/types'
 import { type Draft, draftFeatures, geozoneFeatures, geozonesBounds } from '../../pages/geozones/draft'
+import { ACCENT, SURFACE_COLOR } from './colors'
 import { MapView } from './MapView'
 
 interface Props {
@@ -21,9 +22,6 @@ interface Props {
   onSelect: (id: string | null) => void
 }
 
-/* As the surface chips. */
-const SURFACE_COLOR: ExpressionSpecification = ['match', ['get', 'surface'], 'GRASS', '#2e7d32', 'SAND', '#f59e0b', '#8c959f']
-const ACCENT = '#1565c0'
 const FOCUS = { padding: 60, maxZoom: 18 }
 
 /** The map of the geozones screen (spec 10.1): every geozone in its surface colour, and the shape being drawn. */

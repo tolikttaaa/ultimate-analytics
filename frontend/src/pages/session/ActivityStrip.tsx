@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import type { SessionSeries } from '../../api/types'
-import { PLOT_MARGIN, activityRuns, type Activity } from '../../components/charts/sessionChartOptions'
+import { type Activity, activityRuns, PLOT_MARGIN } from '../../components/charts/sessionChartOptions'
 import { duration } from '../../format'
+import { stripPosition } from './strip'
 import type { TimeWindow } from './timeWindow'
 
 interface Props {
@@ -19,7 +20,6 @@ const NAMES: Record<Activity, string> = { active: 'Active', rest: 'Rest', gap: '
  */
 export function ActivityStrip({ series, view: [from, to], onSelect }: Props) {
   const runs = useMemo(() => activityRuns(series), [series])
-  const percent = (t: number) => `${((t - from) / (to - from)) * 100}%`
   return (
     <div className="strip-row">
       <span className="strip-label">Activity</span>
@@ -28,7 +28,7 @@ export function ActivityStrip({ series, view: [from, to], onSelect }: Props) {
           <div
             key={run.from}
             className={`activity-run ${run.state}`}
-            style={{ left: percent(run.from), width: `${((run.to - run.from) / (to - from)) * 100}%` }}
+            style={stripPosition([run.from, run.to], [from, to])}
             title={`${NAMES[run.state]} ${duration(run.from)}–${duration(run.to)} (${duration(run.to - run.from)}). Click to select.`}
             onClick={() => onSelect([run.from, run.to])}
           />

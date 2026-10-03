@@ -1,7 +1,6 @@
 import type { ECharts } from 'echarts/core'
 import { useEffect, useMemo, useRef } from 'react'
 import { type ChartEventHandlers, EChart } from './EChart'
-import { useChartPalette } from './useChartPalette'
 import {
   accelChartOption,
   brushAreas,
@@ -13,8 +12,10 @@ import {
   speedChartOption,
   zoomedRange,
 } from './sessionChartOptions'
+import { useChartPalette } from './useChartPalette'
 
-interface Props extends SpeedChartData {
+/** The chart data without a palette: the charts take the theme's. */
+interface Props extends Omit<SpeedChartData, 'palette'> {
   /** The selected window, drawn as a brush on all charts. */
   selection: [number, number] | null
   /** Called with the window the user brushed. */

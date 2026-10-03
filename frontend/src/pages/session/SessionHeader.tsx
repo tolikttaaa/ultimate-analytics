@@ -16,8 +16,9 @@ const SURFACE_SOURCES: Record<SurfaceSource, string> = {
 export function SessionHeader({ session }: { session: SessionDetail }) {
   const updateSession = useUpdateSession()
   const recompute = useRecomputeSession()
-  const deleteSession = useDeleteSessions()
+  const deleteSessions = useDeleteSessions()
   const navigate = useNavigate()
+  const failed = [updateSession, recompute, deleteSessions].find((mutation) => mutation.isError)
   const metrics = session.metrics
   const keyMetrics: [string, string][] = [
     ['Duration', duration(session.elapsedSec)],
@@ -27,6 +28,11 @@ export function SessionHeader({ session }: { session: SessionDetail }) {
     ['Max speed', speedKmh(metrics.distance.maxSpeed)],
     ['Moving pace', pace(metrics.distance.movingPaceSecPerKm)],
   ]
+
+  function deleteSession() {
+    if (!confirmDeleteSessions(1)) return
+    deleteSessions.mutate([session.id], { onSuccess: () => navigate('/', { replace: true }) })
+  }
 
   return (
     <header className="session-header">
@@ -58,13 +64,7 @@ export function SessionHeader({ session }: { session: SessionDetail }) {
           >
             {recompute.isPending ? 'Recomputing…' : 'Recompute'}
           </button>
-          <button
-            className="button small danger"
-            disabled={deleteSession.isPending}
-            onClick={() => {
-              if (confirmDeleteSessions(1)) deleteSession.mutate([session.id], { onSuccess: () => navigate('/', { replace: true }) })
-            }}
-          >
+          <button className="button small danger" disabled={deleteSessions.isPending} onClick={deleteSession}>
             Delete
           </button>
         </span>
@@ -83,9 +83,7 @@ export function SessionHeader({ session }: { session: SessionDetail }) {
           </div>
         ))}
       </dl>
-      {(updateSession.isError || recompute.isError || deleteSession.isError) && (
-        <p role="alert" className="error">{(updateSession.error ?? recompute.error ?? deleteSession.error)?.message}</p>
-      )}
+      {failed && <p role="alert" className="error">{failed.error?.message}</p>}
     </header>
   )
 }

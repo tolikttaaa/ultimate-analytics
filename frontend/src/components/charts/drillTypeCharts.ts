@@ -1,6 +1,6 @@
 import type { EChartsCoreOption } from 'echarts/core'
 import type { Schemas, Surface, WindowMetrics } from '../../api/types'
-import { CHART_FONT, CHART_PALETTES, CHART_TEXT, type ChartPalette, tooltipChrome } from './sessionChartOptions'
+import { CHART_PALETTES, CHART_TEXT, type ChartPalette, titleTextStyle, tooltipChrome } from './sessionChartOptions'
 
 type SessionRow = Schemas['DrillTypeSessionRow']
 
@@ -14,6 +14,7 @@ export interface TrendMetric {
 }
 
 const KMH = 3.6
+const DAY_MS = 86_400_000
 
 export const TREND_METRICS: TrendMetric[] = [
   { key: 'peak-best', label: 'Best peak speed', unit: 'km/h', decimals: 1, value: (m) => m.efforts.peakSpeed && m.efforts.peakSpeed.best * KMH },
@@ -52,13 +53,15 @@ export function trendChartOption(
   })
   // With one day only, ECharts would stretch the axis over years: a month around it instead.
   const times = points.map((point) => Date.parse(point.value[0] as string))
-  const oneDay = times.length > 0 && Math.max(...times) - Math.min(...times) < 86_400_000
-  const range = oneDay ? { min: Math.min(...times) - 15 * 86_400_000, max: Math.max(...times) + 15 * 86_400_000 } : {}
+  const first = Math.min(...times)
+  const last = Math.max(...times)
+  const oneDay = times.length > 0 && last - first < DAY_MS
+  const range = oneDay ? { min: first - 15 * DAY_MS, max: last + 15 * DAY_MS } : {}
   return {
     animation: false,
     ...CHART_TEXT,
     grid: { left: 56, right: 24, top: 36, bottom: 32 },
-    title: { text: `${metric.label} (${metric.unit})`, left: 56, top: 4, textStyle: { fontFamily: CHART_FONT, fontSize: 13, fontWeight: 600, color: palette.title } },
+    title: { text: `${metric.label} (${metric.unit})`, left: 56, top: 4, textStyle: titleTextStyle(palette) },
     tooltip: {
       ...tooltipChrome(palette),
       trigger: 'item',

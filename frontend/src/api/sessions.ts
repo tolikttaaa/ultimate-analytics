@@ -64,7 +64,7 @@ export function useUpdateSession() {
 
 /**
  * DELETE /api/sessions/{id} for each session: removes it with its samples, segments, efforts and stored FIT file.
- * Resolves with the ids that could not be deleted.
+ * Tries every session, then fails with a count when any could not be deleted.
  */
 export function useDeleteSessions() {
   const queryClient = useQueryClient()

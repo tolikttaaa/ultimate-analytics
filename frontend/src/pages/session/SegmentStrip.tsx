@@ -9,7 +9,7 @@ import {
 import type { DrillType, Segment } from '../../api/types'
 import { PLOT_MARGIN, segmentColor, segmentLabel } from '../../components/charts/sessionChartOptions'
 import { duration } from '../../format'
-import { edgeLimits, nextSegment, timeAt } from './strip'
+import { edgeLimits, nextSegment, stripPosition, timeAt } from './strip'
 import type { TimeWindow } from './timeWindow'
 
 interface Props {
@@ -55,7 +55,6 @@ export function SegmentStrip({ sessionId, segments, drillTypes, view: [from, to]
   const failed = [update, remove, split, merge, reset].find((mutation) => mutation.isError)
 
   const tAt = (clientX: number) => timeAt(clientX, strip.current!.getBoundingClientRect(), [from, to])
-  const percent = (t: number) => `${((t - from) / (to - from)) * 100}%`
   const shown = segments.map((segment) =>
     drag?.segmentId === segment.id ? { ...segment, [drag.edge === 'start' ? 'startT' : 'endT']: drag.t } : segment)
 
@@ -93,36 +92,35 @@ export function SegmentStrip({ sessionId, segments, drillTypes, view: [from, to]
   return (
     <>
       <div className="strip-row">
-      <span className="strip-label">Segments</span>
-      <div
-        ref={strip}
-        className="segment-strip"
-        style={{ marginRight: PLOT_MARGIN.right }}
-        aria-label="Segments"
-        onContextMenu={openMenu}
-      >
-        {shown.filter((segment) => segment.endT > from && segment.startT < to).map((segment) => {
-          const label = segmentLabel(segment, drillTypes)
-          const selected = selection?.[0] === segment.startT && selection?.[1] === segment.endT
-          return (
-            <div
-              key={segment.id}
-              className={`segment ${selected ? 'selected' : ''}`}
-              style={{
-                left: percent(segment.startT),
-                width: `${((segment.endT - segment.startT) / (to - from)) * 100}%`,
-                background: segmentColor(segment, drillTypes),
-              }}
-              title={`${label}: ${duration(segment.startT)}–${duration(segment.endT)}. Click to select, drag an edge to resize, right-click for more.`}
-              onClick={() => onSelect([segment.startT, segment.endT])}
-            >
-              <span className="segment-edge start" aria-label={`Move start of ${label}`} onMouseDown={(e) => startDrag(e, segment, 'start')} />
-              <span className="segment-label">{label}</span>
-              <span className="segment-edge end" aria-label={`Move end of ${label}`} onMouseDown={(e) => startDrag(e, segment, 'end')} />
-            </div>
-          )
-        })}
-      </div>
+        <span className="strip-label">Segments</span>
+        <div
+          ref={strip}
+          className="segment-strip"
+          style={{ marginRight: PLOT_MARGIN.right }}
+          aria-label="Segments"
+          onContextMenu={openMenu}
+        >
+          {shown.filter((segment) => segment.endT > from && segment.startT < to).map((segment) => {
+            const label = segmentLabel(segment, drillTypes)
+            const selected = selection?.[0] === segment.startT && selection?.[1] === segment.endT
+            return (
+              <div
+                key={segment.id}
+                className={`segment ${selected ? 'selected' : ''}`}
+                style={{
+                  ...stripPosition([segment.startT, segment.endT], [from, to]),
+                  background: segmentColor(segment, drillTypes),
+                }}
+                title={`${label}: ${duration(segment.startT)}–${duration(segment.endT)}. Click to select, drag an edge to resize, right-click for more.`}
+                onClick={() => onSelect([segment.startT, segment.endT])}
+              >
+                <span className="segment-edge start" aria-label={`Move start of ${label}`} onMouseDown={(e) => startDrag(e, segment, 'start')} />
+                <span className="segment-label">{label}</span>
+                <span className="segment-edge end" aria-label={`Move end of ${label}`} onMouseDown={(e) => startDrag(e, segment, 'end')} />
+              </div>
+            )
+          })}
+        </div>
       </div>
       {failed && <p role="alert" className="error strip-error">{failed.error?.message}</p>}
       {menu && (

@@ -106,10 +106,6 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
   )
 }
 
-/**
- * For a session no geozone matched: pick the surface by hand, or create a geozone around its start, which also
- * classifies other sessions at that place (spec 6.6). Shows the surface once it is known.
- */
 interface PickerProps {
   sessionId: string
   /** Whether this row shows the map of the place. */
@@ -117,6 +113,10 @@ interface PickerProps {
   onShowMap: () => void
 }
 
+/**
+ * For a session no geozone matched: pick the surface by hand, or create a geozone around its start, which also
+ * classifies other sessions at that place (spec 6.6). Shows the surface once it is known.
+ */
 function SurfacePicker({ sessionId, showMap, onShowMap }: PickerProps) {
   const session = useSession(sessionId)
   const config = useUiConfig()

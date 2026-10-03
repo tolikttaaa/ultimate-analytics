@@ -1,8 +1,9 @@
 import type { FeatureCollection, Position } from 'geojson'
-import type { ExpressionSpecification, GeoJSONSource, Map } from 'maplibre-gl'
+import type { GeoJSONSource, Map } from 'maplibre-gl'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import type { Geozone, MapConfig } from '../../api/types'
 import { geozoneFeatures } from '../../pages/geozones/draft'
+import { ACCENT, SURFACE_COLOR } from './colors'
 import { geozoneOutline, SHAPE } from './geo'
 import { MapView } from './MapView'
 
@@ -16,22 +17,19 @@ interface Props {
   previewRadiusM: number | null
 }
 
-/* As the surface chips. */
-const SURFACE_COLOR: ExpressionSpecification = ['match', ['get', 'surface'], 'GRASS', '#2e7d32', 'SAND', '#f59e0b', '#8c959f']
-const ACCENT = '#1565c0'
 const EMPTY: FeatureCollection = { type: 'FeatureCollection', features: [] }
 
 /** Where a session started, with the geozones around it, for picking its surface (backlog: map in the upload dialog). */
 export function PlaceMap({ config, position, geozones, previewRadiusM }: Props) {
   const map = useRef<Map | null>(null)
-  const data = useMemo(() => {
-    const preview = previewRadiusM && previewRadiusM > 0
+  const data = useMemo((): Record<string, FeatureCollection> => {
+    const preview = previewRadiusM != null && previewRadiusM > 0
       ? geozoneOutline({ type: SHAPE.circle, lon: position[0], lat: position[1], radiusM: previewRadiusM })
       : null
     return {
       'place-geozones': geozoneFeatures(geozones),
-      'place-preview': preview ? { type: 'FeatureCollection', features: [preview] } as FeatureCollection : EMPTY,
-      'place-start': { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: position } }] } as FeatureCollection,
+      'place-preview': preview ? { type: 'FeatureCollection', features: [preview] } : EMPTY,
+      'place-start': { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: position } }] },
     }
   }, [position, geozones, previewRadiusM])
   const latest = useRef(data)

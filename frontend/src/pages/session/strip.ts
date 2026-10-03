@@ -2,8 +2,14 @@ import type { Segment } from '../../api/types'
 import type { TimeWindow } from './timeWindow'
 
 /*
- * Geometry of the segment strip: it shows the [from, to] of t the charts show, across its width.
+ * Geometry of the segment and activity strips: they show the [from, to] of t the charts show, across their width.
  */
+
+/** Where [start, end] of t lies on a strip: its left edge and width as CSS percentages of the view. */
+export function stripPosition([start, end]: TimeWindow, [from, to]: TimeWindow): { left: string; width: string } {
+  const share = (span: number) => `${(span / (to - from)) * 100}%`
+  return { left: share(start - from), width: share(end - start) }
+}
 
 /** The t at a horizontal position of the strip, rounded to whole seconds and kept inside the view. */
 export function timeAt(clientX: number, strip: { left: number; width: number }, [from, to]: TimeWindow): number {

@@ -73,6 +73,8 @@ export function SessionPage() {
   }
   if (!session.data) return <p>Loading session…</p>
   const geozone = geozones.data?.find((zone) => zone.id === session.data.geozoneId) ?? null
+  // The strips follow the charts' zoom.
+  const chartView: TimeWindow = view ?? [0, lastT]
   const columns: MetricsColumn[] = [{ label: 'Session', metrics: session.data.metrics }]
   if (selection) columns.push({ label: 'Window', metrics: settled ? windowMetrics.data : undefined })
 
@@ -85,12 +87,12 @@ export function SessionPage() {
             sessionId={id}
             segments={session.data.segments}
             drillTypes={drillTypes.data ?? []}
-            view={view ?? [0, lastT]}
+            view={chartView}
             lastT={lastT}
             selection={selection}
             onSelect={setSelection}
           />
-          {series.data && <ActivityStrip series={series.data} view={view ?? [0, lastT]} onSelect={setSelection} />}
+          {series.data && <ActivityStrip series={series.data} view={chartView} onSelect={setSelection} />}
           <WindowBar
             sessionId={id}
             selection={selection}

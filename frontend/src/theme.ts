@@ -62,7 +62,7 @@ function subscribe(listener: () => void) {
 
 /** The theme choice and the theme it resolves to. */
 export function useTheme(): { choice: ThemeChoice; theme: Theme } {
-  const snapshot = useSyncExternalStore(subscribe, () => `${choice}:${resolveTheme(choice)}`)
-  const [current, theme] = snapshot.split(':') as [ThemeChoice, Theme]
+  const current = useSyncExternalStore(subscribe, () => choice)
+  const theme = useSyncExternalStore(subscribe, () => resolveTheme(choice))
   return { choice: current, theme }
 }

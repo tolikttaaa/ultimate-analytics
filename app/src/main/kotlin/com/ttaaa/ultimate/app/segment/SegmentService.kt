@@ -39,11 +39,18 @@ class SegmentService(
      * conflict (spec 9.1).
      */
     @Transactional
-    fun create(sessionId: UUID, range: TimeRange, drillTypeId: UUID?, label: String?, overwrite: Boolean = false): Segment {
+    fun create(
+        sessionId: UUID,
+        range: TimeRange,
+        drillTypeId: UUID?,
+        label: String?,
+        overwrite: Boolean = false,
+    ): Segment {
         val session = lockSession(sessionId)
         val segment = Segment(UUID.randomUUID(), sessionId, range, checkDrillType(drillTypeId), label.normalized(), SegmentSource.MANUAL)
-        val all = segments.findBySession(sessionId)
-        checkPlacement(session, segment, if (overwrite) makeRoom(range, all) else all)
+        val existing = segments.findBySession(sessionId)
+        val others = if (overwrite) makeRoom(range, existing) else existing
+        checkPlacement(session, segment, others)
         segments.insertAll(listOf(segment))
         reattributeEfforts(sessionId)
         return segment
@@ -146,15 +153,15 @@ class SegmentService(
             segment.range.fromT to minOf(range.fromT, segment.range.toT),
             maxOf(range.toT, segment.range.fromT) to segment.range.toT,
         ).filter { (from, to) -> to - from >= Segment.MIN_DURATION_SEC }.map { (from, to) -> TimeRange(from, to) }
-        snapshots.delete(MetricsScope.SEGMENT, segment.id)
         if (parts.isEmpty()) {
             remove(segment.id)
             return@flatMap emptyList()
         }
         // The first part keeps the segment's id; a second part (the window was inside it) is a new segment.
-        val kept = segment.copy(range = parts[0], source = SegmentSource.MANUAL)
+        val kept = segment.copy(range = parts.first(), source = SegmentSource.MANUAL)
+        val split = parts.drop(1).map { kept.copy(id = UUID.randomUUID(), range = it) }
+        snapshots.delete(MetricsScope.SEGMENT, segment.id)
         segments.update(kept)
-        val split = parts.drop(1).map { segment.copy(id = UUID.randomUUID(), range = it, source = SegmentSource.MANUAL) }
         segments.insertAll(split)
         listOf(kept) + split
     }

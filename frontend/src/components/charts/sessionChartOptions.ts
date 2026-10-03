@@ -9,7 +9,7 @@ import type { Theme } from '../../theme'
  */
 
 /** The interface font; ECharts draws on a canvas and needs it named. */
-export const CHART_FONT = "Barlow, system-ui, sans-serif"
+const CHART_FONT = 'Barlow, system-ui, sans-serif'
 
 /** Text of every chart in the interface font. */
 export const CHART_TEXT = {
@@ -20,6 +20,7 @@ export const CHART_TEXT = {
 export const PLOT_MARGIN = { left: 64, right: 24 }
 
 const MPS_TO_KMH = 3.6
+
 /** Colours of the charts in one theme; lines, marks and the chrome around them. */
 export interface ChartPalette {
   speed: string
@@ -115,7 +116,10 @@ export interface ActivityRun {
   to: number
 }
 
-const activityOf = (inPause: boolean | null | undefined): Activity => (inPause == null ? 'gap' : inPause ? 'rest' : 'active')
+function activityOf(inPause: boolean | null | undefined): Activity {
+  if (inPause == null) return 'gap'
+  return inPause ? 'rest' : 'active'
+}
 
 /** The session as runs of active time, rest (pauses, spec 6.3) and gaps without data. */
 export function activityRuns(series: Pick<SessionSeries, 't' | 'inPause'>): ActivityRun[] {
@@ -181,6 +185,11 @@ export function tooltipChrome(palette: ChartPalette) {
   }
 }
 
+/** Text style of a chart's title in the theme's colours. */
+export function titleTextStyle(palette: ChartPalette) {
+  return { fontFamily: CHART_FONT, fontSize: 13, fontWeight: 600, color: palette.title }
+}
+
 interface BaseOptions {
   palette: ChartPalette
   /** More lines for the tooltip of a second. */
@@ -197,7 +206,7 @@ function baseOption({ palette, tooltipExtra, series, lastT, title, unit, decimal
   return {
     animation: false,
     ...CHART_TEXT,
-    title: { text: title, left: PLOT_MARGIN.left, top: 0, textStyle: { fontFamily: CHART_FONT, fontSize: 13, fontWeight: 600, color: palette.title } },
+    title: { text: title, left: PLOT_MARGIN.left, top: 0, textStyle: titleTextStyle(palette) },
     grid: { ...PLOT_MARGIN, top: 24, bottom: withSlider ? 56 : 22 },
     tooltip: { ...tooltipChrome(palette), trigger: 'axis', axisPointer: { type: 'line' }, formatter: tooltipFormatter(series, unit, decimals, tooltipExtra) },
     xAxis: {

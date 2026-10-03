@@ -1,11 +1,12 @@
 import type { FeatureCollection } from 'geojson'
 import type { GeoJSONSource, LayerSpecification, Map } from 'maplibre-gl'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { DrillType, Effort, Geozone, MapConfig, Segment, SessionSeries, Surface } from '../../api/types'
+import type { DrillType, Effort, Geozone, MapConfig, Segment, SessionSeries } from '../../api/types'
 import type { Cursor } from '../../pages/session/cursor'
 import type { TimeWindow } from '../../pages/session/timeWindow'
 import { type Theme, useTheme } from '../../theme'
 import { segmentColor } from '../charts/sessionChartOptions'
+import { SURFACE_COLORS } from './colors'
 import { cursorPoint, effortStarts, geozoneOutline, segmentTracks, trackBounds, trackLines } from './geo'
 import { MapView } from './MapView'
 
@@ -22,8 +23,6 @@ interface Props {
   cursor: Cursor
 }
 
-/* As the surface chips. */
-const SURFACE_COLORS: Record<Surface, string> = { GRASS: '#2e7d32', SAND: '#f59e0b', UNKNOWN: '#8c959f' }
 /** Overlay colours that depend on the base map's theme. */
 const TRACK_COLORS: Record<Theme, { track: string; casing: string; casingOpacity: number; accent: string }> = {
   light: { track: '#59636e', casing: '#ffffff', casingOpacity: 0.75, accent: '#1565c0' },
@@ -69,7 +68,7 @@ export function SessionMap({ config, series, efforts, segments, drillTypes, time
 
   // Switching between the whole track and the window shows what is drawn.
   useEffect(() => {
-    const shown = Number.isFinite(from) ? trackBounds(series, from, to) : trackBounds(series)
+    const shown = trackBounds(series, from, to)
     if (shown) map.current?.fitBounds(shown as [[number, number], [number, number]], FIT)
   }, [series, from, to])
 
