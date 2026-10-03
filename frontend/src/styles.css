@@ -948,3 +948,8 @@ input {
 .legend-swatch.rest {
   background: #d5dae0;
 }
+
+.place-map {
+  width: 100%;
+  height: 220px;
+}

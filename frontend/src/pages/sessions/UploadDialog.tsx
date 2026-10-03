@@ -1,9 +1,13 @@
-import { type DragEvent, useEffect, useRef, useState } from 'react'
+import { type DragEvent, lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
-import { useCreateGeozone } from '../../api/geozones'
+import { useUiConfig } from '../../api/config'
+import { useCreateGeozone, useGeozones } from '../../api/geozones'
 import { useSession, useUpdateSession, useUploadSessions } from '../../api/sessions'
 import type { Surface, UploadResult } from '../../api/types'
 import { SurfaceChip } from '../../components/Chips'
+
+// MapLibre is a chunk of its own, loaded once a session needs a surface.
+const PlaceMap = lazy(() => import('../../components/map/PlaceMap').then((module) => ({ default: module.PlaceMap })))
 
 const STATUS_LABELS: Record<UploadResult['status'], string> = {
   CREATED: 'created',
@@ -20,6 +24,10 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
   const upload = useUploadSessions()
   const [results, setResults] = useState<UploadResult[]>([])
   const [dragging, setDragging] = useState(false)
+  // One map at a time (browsers allow few WebGL maps): the first session at an unknown place, or the one asked for.
+  const [mapFor, setMapFor] = useState<string | null>(null)
+  const firstUnknown = results.find((result) => result.status === 'CREATED' && result.needsSurface)?.sessionId ?? null
+  const shownMap = mapFor ?? firstUnknown
 
   useEffect(() => {
     const element = dialog.current
@@ -84,7 +92,11 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
               {result.error && <span className="error">{result.error}</span>}
               {result.sessionId && <Link to={`/sessions/${result.sessionId}`} onClick={onClose}>Open</Link>}
               {result.status === 'CREATED' && result.needsSurface && result.sessionId && (
-                <SurfacePicker sessionId={result.sessionId} />
+                <SurfacePicker
+                  sessionId={result.sessionId}
+                  showMap={shownMap === result.sessionId}
+                  onShowMap={() => setMapFor(result.sessionId!)}
+                />
               )}
             </li>
           ))}
@@ -98,8 +110,17 @@ export function UploadDialog({ onClose }: { onClose: () => void }) {
  * For a session no geozone matched: pick the surface by hand, or create a geozone around its start, which also
  * classifies other sessions at that place (spec 6.6). Shows the surface once it is known.
  */
-function SurfacePicker({ sessionId }: { sessionId: string }) {
+interface PickerProps {
+  sessionId: string
+  /** Whether this row shows the map of the place. */
+  showMap: boolean
+  onShowMap: () => void
+}
+
+function SurfacePicker({ sessionId, showMap, onShowMap }: PickerProps) {
   const session = useSession(sessionId)
+  const config = useUiConfig()
+  const geozones = useGeozones()
   const updateSession = useUpdateSession()
   const createGeozone = useCreateGeozone()
   const [creating, setCreating] = useState(false)
@@ -162,8 +183,21 @@ function SurfacePicker({ sessionId }: { sessionId: string }) {
           <button className="button small primary" type="submit" disabled={busy}>Create</button>
         </form>
       )}
+      {start && !showMap && <button className="button small link" onClick={onShowMap}>Show on map</button>}
       {(updateSession.isError || createGeozone.isError) && (
         <span role="alert" className="error">{(updateSession.error ?? createGeozone.error)?.message}</span>
+      )}
+      {start && showMap && config.data && geozones.data && (
+        <div className="place-map">
+          <Suspense fallback={<div className="map-placeholder">Loading map…</div>}>
+            <PlaceMap
+              config={config.data.map}
+              position={[start.lon, start.lat]}
+              geozones={geozones.data}
+              previewRadiusM={creating ? radiusM : null}
+            />
+          </Suspense>
+        </div>
       )}
     </div>
   )

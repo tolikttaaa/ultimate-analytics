@@ -558,3 +558,11 @@ Newest entries at the bottom.
     legend explains the band.
   - One run model (`activityRuns`) feeds the shading, the tooltip and the band.
 - **Alternatives:** shading active time instead of rest; a separate rest/active chart.
+
+## 2026-10-03 — Map when picking a surface (backlog)
+
+- **Context:** backlog: see where a training took place when choosing grass or sand in the upload dialog.
+- **Decision:** a session at an unknown place shows a small map with its start, the existing geozones and, while
+  *Create geozone* is open, a preview of the circle. Only one map is shown at a time (browsers allow few WebGL
+  contexts and a batch upload can hold a dozen unknown places): the first unknown place, others on *Show on map*.
+- **Alternatives:** one map per row; one shared map with all unknown starts as numbered points.

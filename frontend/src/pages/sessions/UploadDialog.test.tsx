@@ -2,10 +2,17 @@ import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { UploadResult } from '../../api/types'
-import { sessionDetail } from '../../test/data'
+import { geozone, sessionDetail, uiConfig } from '../../test/data'
 import { fakeApi } from '../../test/fakeApi'
 import { renderPage } from '../../test/render'
 import { UploadDialog } from './UploadDialog'
+
+// jsdom has no WebGL: the map says where it is.
+vi.mock('../../components/map/PlaceMap', () => ({
+  PlaceMap: ({ position, previewRadiusM }: { position: number[]; previewRadiusM: number | null }) => (
+    <div>map at {position.join(',')}{previewRadiusM ? `, preview ${previewRadiusM} m` : ''}</div>
+  ),
+}))
 
 function chooseFiles(...names: string[]) {
   const input = document.querySelector<HTMLInputElement>('input[type=file]')!
@@ -44,6 +51,8 @@ describe('UploadDialog', () => {
     let surface = 'UNKNOWN'
     const calls = fakeApi({
       'POST /api/sessions/upload': () => [unknownPlace],
+      'GET /api/config': () => uiConfig(),
+      'GET /api/geozones': () => [geozone()],
       'GET /api/sessions/s1': () => sessionDetail({ surface: surface as never, surfaceSource: surface === 'UNKNOWN' ? 'NONE' : 'MANUAL' }),
       'PATCH /api/sessions/s1': (call) => {
         surface = (call.body as { surface: string }).surface
@@ -63,6 +72,8 @@ describe('UploadDialog', () => {
     let matched = false
     const calls = fakeApi({
       'POST /api/sessions/upload': () => [unknownPlace],
+      'GET /api/config': () => uiConfig(),
+      'GET /api/geozones': () => [geozone()],
       'GET /api/sessions/s1': () => matched
         ? sessionDetail({ surface: 'SAND', surfaceSource: 'GEOZONE', geozoneName: 'Beach courts' })
         : sessionDetail(),
@@ -82,10 +93,43 @@ describe('UploadDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create' }))
 
     expect(await screen.findByText('Beach courts')).toBeInTheDocument()
-    expect(calls.find((call) => call.path === '/api/geozones')?.body).toEqual({
+    expect(calls.find((call) => call.method === 'POST' && call.path === '/api/geozones')?.body).toEqual({
       name: 'Beach courts',
       surface: 'SAND',
       shape: { type: 'circle', lat: 34.70786, lon: 33.12787, radiusM: 200 },
     })
+  })
+
+  it('shows where the first unknown place is, and another one on request', async () => {
+    fakeApi({
+      'POST /api/sessions/upload': () => [unknownPlace, { ...unknownPlace, fileName: 'b.fit', sessionId: 's2' }],
+      'GET /api/config': () => uiConfig(),
+      'GET /api/geozones': () => [],
+      'GET /api/sessions/s1': () => sessionDetail(),
+      'GET /api/sessions/s2': () => sessionDetail({ id: 's2', startPosition: { lat: 34.6, lon: 33.0 } }),
+    })
+    renderPage(<UploadDialog onClose={() => {}} />)
+    chooseFiles('a.fit', 'b.fit')
+
+    expect(await screen.findByText('map at 33.12787,34.70786')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Show on map' }))
+    expect(await screen.findByText('map at 33,34.6')).toBeInTheDocument()
+    expect(screen.queryByText('map at 33.12787,34.70786')).not.toBeInTheDocument()
+  })
+
+  it('previews the geozone about to be created', async () => {
+    fakeApi({
+      'POST /api/sessions/upload': () => [unknownPlace],
+      'GET /api/config': () => uiConfig(),
+      'GET /api/geozones': () => [],
+      'GET /api/sessions/s1': () => sessionDetail(),
+    })
+    renderPage(<UploadDialog onClose={() => {}} />)
+    chooseFiles('a.fit')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Create geozone from this session' }))
+    expect(await screen.findByText('map at 33.12787,34.70786, preview 150 m')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Radius (m)'), { target: { value: '220' } })
+    expect(await screen.findByText('map at 33.12787,34.70786, preview 220 m')).toBeInTheDocument()
   })
 })
