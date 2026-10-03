@@ -31,9 +31,11 @@ vi.mock('../../components/map/SessionMap', () => ({
 }))
 
 function renderSession(overrides: Parameters<typeof sessionDetail>[0] = {}, url = '/sessions/s1') {
+  let deleted = false
   let detail = sessionDetail({ segments: [segment({ endT: 3900 })], ...overrides })
   const calls = fakeApi({
-    'GET /api/sessions/s1': () => detail,
+    // A deleted session is gone, as on the server.
+    'GET /api/sessions/s1': () => (deleted ? problem(404, 'Session s1 not found') : detail),
     'GET /api/sessions/s1/series': () => sessionSeries(),
     'GET /api/sessions/s1/efforts': () => [effort(), effort({ id: 'e2', startT: 6, peakT: 7, endT: 8 })],
     'GET /api/sessions/s1/metrics': () => windowMetrics({ decelCount: 4, efforts: { ...windowMetrics().efforts, count: 3 } }),
@@ -43,6 +45,10 @@ function renderSession(overrides: Parameters<typeof sessionDetail>[0] = {}, url 
     'PATCH /api/sessions/s1': (call) => {
       detail = { ...detail, ...(call.body as object), surfaceSource: 'MANUAL' }
       return detail
+    },
+    'DELETE /api/sessions/s1': () => {
+      deleted = true
+      return new Response(null, { status: 204 })
     },
     'POST /api/sessions/s1/recompute': () => {
       detail = { ...detail, outdated: false }
@@ -159,6 +165,19 @@ describe('SessionPage', () => {
 
     await vi.waitFor(() => expect(screen.queryByText('outdated')).not.toBeInTheDocument())
     expect(calls.some((call) => call.method === 'POST' && call.path === '/api/sessions/s1/recompute')).toBe(true)
+  })
+
+  it('deletes the session after confirmation and returns to the list', async () => {
+    const calls = renderSession()
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete' }))
+
+    await vi.waitFor(() => expect(calls.router.state.location.pathname).toBe('/'))
+    const deletion = calls.findIndex((call) => call.method === 'DELETE' && call.path === '/api/sessions/s1')
+    expect(deletion).toBeGreaterThanOrEqual(0)
+    // Refetched, the deleted session would fail and replace the screen before it navigates away.
+    expect(calls.slice(deletion + 1).filter((call) => call.path.startsWith('/api/sessions/s1'))).toEqual([])
+    vi.restoreAllMocks()
   })
 
   it('says when the session does not exist', async () => {

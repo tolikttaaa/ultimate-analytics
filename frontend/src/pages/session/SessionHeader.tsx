@@ -1,4 +1,5 @@
-import { useRecomputeSession, useUpdateSession } from '../../api/sessions'
+import { useNavigate } from 'react-router'
+import { confirmDeleteSessions, useDeleteSessions, useRecomputeSession, useUpdateSession } from '../../api/sessions'
 import type { SessionDetail, Surface } from '../../api/types'
 import { Badge, SurfaceChip } from '../../components/Chips'
 import { distance, duration, localDateTime, pace, speedKmh } from '../../format'
@@ -7,6 +8,8 @@ import { distance, duration, localDateTime, pace, speedKmh } from '../../format'
 export function SessionHeader({ session }: { session: SessionDetail }) {
   const updateSession = useUpdateSession()
   const recompute = useRecomputeSession()
+  const deleteSession = useDeleteSessions()
+  const navigate = useNavigate()
   const metrics = session.metrics
   const keyMetrics: [string, string][] = [
     ['Duration', duration(session.elapsedSec)],
@@ -47,6 +50,15 @@ export function SessionHeader({ session }: { session: SessionDetail }) {
           >
             {recompute.isPending ? 'Recomputing…' : 'Recompute'}
           </button>
+          <button
+            className="button small danger"
+            disabled={deleteSession.isPending}
+            onClick={() => {
+              if (confirmDeleteSessions(1)) deleteSession.mutate([session.id], { onSuccess: () => navigate('/', { replace: true }) })
+            }}
+          >
+            Delete
+          </button>
         </span>
       </div>
       {session.recordingMode === 'SMART' && (
@@ -63,8 +75,8 @@ export function SessionHeader({ session }: { session: SessionDetail }) {
           </div>
         ))}
       </dl>
-      {(updateSession.isError || recompute.isError) && (
-        <p role="alert" className="error">{(updateSession.error ?? recompute.error)?.message}</p>
+      {(updateSession.isError || recompute.isError || deleteSession.isError) && (
+        <p role="alert" className="error">{(updateSession.error ?? recompute.error ?? deleteSession.error)?.message}</p>
       )}
     </header>
   )

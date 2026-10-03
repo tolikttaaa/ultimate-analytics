@@ -566,3 +566,14 @@ Newest entries at the bottom.
   *Create geozone* is open, a preview of the circle. Only one map is shown at a time (browsers allow few WebGL
   contexts and a batch upload can hold a dozen unknown places): the first unknown place, others on *Show on map*.
 - **Alternatives:** one map per row; one shared map with all unknown starts as numbered points.
+
+## 2026-10-03 — Deleting sessions (backlog)
+
+- **Context:** backlog: delete sessions from the UI, also several at once; the API already had
+  `DELETE /api/sessions/{id}`.
+- **Decision:** checkboxes (and select-all of the page) in the sessions list with *Delete selected*, and *Delete* on
+  the session screen, which returns to the list. Both ask first, saying that segments and notes are lost and the
+  files can be uploaded again. Several sessions are deleted one request each; a partial failure says how many were
+  not deleted. After a delete, every session query is refreshed except those of the deleted sessions: refetched they
+  fail, and the session screen would show "does not exist" instead of navigating away.
+- **Alternatives:** a batch delete endpoint (not needed for a handful of sessions); selection across pages.

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { type SessionFilter, useSessions } from '../../api/sessions'
+import { confirmDeleteSessions, type SessionFilter, useDeleteSessions, useSessions } from '../../api/sessions'
 import type { SessionSummary, Surface } from '../../api/types'
 import { Badge, SurfaceChip } from '../../components/Chips'
 import { endOfDay, startOfDay } from '../../dates'
@@ -26,7 +26,21 @@ export function SessionsPage() {
     size: PAGE_SIZE,
   }
   const sessions = useSessions(filter)
+  const deleteSessions = useDeleteSessions()
+  const [selected, setSelected] = useState<Set<string>>(new Set())
   const filtered = Boolean(surface || fromDay || toDay)
+
+  function deleteSelected() {
+    if (!confirmDeleteSessions(selected.size)) return
+    const remainingOnPage = (sessions.data?.items.length ?? 0) - selected.size
+    deleteSessions.mutate([...selected], {
+      onSettled: () => {
+        setSelected(new Set())
+        // A page emptied by the delete shows the one before.
+        if (remainingOnPage <= 0 && page > 0) update({ page: String(page - 1) })
+      },
+    })
+  }
 
   /** Changes URL parameters; a new filter starts again at the first page. */
   function update(changes: Record<string, string | null>) {
@@ -36,6 +50,7 @@ export function SessionsPage() {
       else next.delete(key)
     }
     if (!('page' in changes)) next.delete('page')
+    setSelected(new Set())
     setParams(next)
   }
 
@@ -69,6 +84,16 @@ export function SessionsPage() {
         )}
       </div>
 
+      {selected.size > 0 && (
+        <div className="selection-bar" role="region" aria-label="Selection">
+          <span>{selected.size} selected</span>
+          <button className="button small danger" disabled={deleteSessions.isPending} onClick={deleteSelected}>
+            {deleteSessions.isPending ? 'Deleting…' : 'Delete selected'}
+          </button>
+          <button className="button small link" onClick={() => setSelected(new Set())}>Clear selection</button>
+        </div>
+      )}
+      {deleteSessions.isError && <p role="alert" className="error">{deleteSessions.error.message}</p>}
       {sessions.isPending && <p>Loading sessions…</p>}
       {sessions.isError && <p role="alert">Could not load the sessions: {sessions.error.message}</p>}
       {sessions.data && sessions.data.totalItems === 0 && (
@@ -83,7 +108,7 @@ export function SessionsPage() {
       )}
       {sessions.data && sessions.data.totalItems > 0 && (
         <>
-          <SessionsTable sessions={sessions.data.items} />
+          <SessionsTable sessions={sessions.data.items} selected={selected} onSelect={setSelected} />
           <div className="pagination">
             <button className="button" disabled={page === 0} onClick={() => update({ page: String(page - 1) })}>
               Previous
@@ -107,12 +132,33 @@ export function SessionsPage() {
   )
 }
 
-function SessionsTable({ sessions }: { sessions: SessionSummary[] }) {
+interface TableProps {
+  sessions: SessionSummary[]
+  selected: Set<string>
+  onSelect: (selected: Set<string>) => void
+}
+
+function SessionsTable({ sessions, selected, onSelect }: TableProps) {
   const navigate = useNavigate()
+  const allSelected = sessions.length > 0 && sessions.every((session) => selected.has(session.id))
+  const toggle = (id: string) => {
+    const next = new Set(selected)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    onSelect(next)
+  }
   return (
     <table className="table sessions-table">
       <thead>
         <tr>
+          <th className="select">
+            <input
+              type="checkbox"
+              aria-label="Select all sessions on this page"
+              checked={allSelected}
+              onChange={() => onSelect(allSelected ? new Set() : new Set(sessions.map((session) => session.id)))}
+            />
+          </th>
           <th>Date</th>
           <th>Location</th>
           <th>Surface</th>
@@ -126,7 +172,19 @@ function SessionsTable({ sessions }: { sessions: SessionSummary[] }) {
       </thead>
       <tbody>
         {sessions.map((session) => (
-          <tr key={session.id} className="clickable" onClick={() => navigate(`/sessions/${session.id}`)}>
+          <tr
+            key={session.id}
+            className={`clickable ${selected.has(session.id) ? 'selected' : ''}`}
+            onClick={() => navigate(`/sessions/${session.id}`)}
+          >
+            <td className="select" onClick={(e) => e.stopPropagation()}>
+              <input
+                type="checkbox"
+                aria-label={`Select session of ${localDateTime(session.startTime, session.localTzOffsetSec)}`}
+                checked={selected.has(session.id)}
+                onChange={() => toggle(session.id)}
+              />
+            </td>
             <td>
               <Link to={`/sessions/${session.id}`} onClick={(e) => e.stopPropagation()}>
                 {localDateTime(session.startTime, session.localTzOffsetSec)}

@@ -62,6 +62,44 @@ export function useUpdateSession() {
   })
 }
 
+/**
+ * DELETE /api/sessions/{id} for each session: removes it with its samples, segments, efforts and stored FIT file.
+ * Resolves with the ids that could not be deleted.
+ */
+export function useDeleteSessions() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const failed: string[] = []
+      for (const id of ids) {
+        try {
+          await unwrap(api.DELETE('/api/sessions/{id}', { params: { path: { id } } }))
+        } catch {
+          failed.push(id)
+        }
+      }
+      if (failed.length > 0) throw new Error(`${failed.length} of ${ids.length} sessions could not be deleted.`)
+    },
+    // Also after a partial failure: some sessions are gone. Their own queries are left alone: refetched they would
+    // fail and replace a session screen that is about to navigate away.
+    onSettled: (_data, _error, ids) => Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: sessionKeys.all,
+        predicate: (query) => !ids.some((id) => query.queryKey.includes(id)),
+      }),
+      queryClient.invalidateQueries({ queryKey: ['drill-types'] }),
+    ]),
+  })
+}
+
+/** The confirmation before deleting sessions. */
+export function confirmDeleteSessions(count: number): boolean {
+  const what = count === 1 ? 'this session' : `${count} sessions`
+  return window.confirm(
+    `Delete ${what}? Segments and notes are lost and the FIT files are removed; you can upload the files again.`,
+  )
+}
+
 /** GET /api/sessions/{id}/series: the 1 Hz series in columns, null in gaps. */
 export function useSessionSeries(id: string) {
   return useQuery({

@@ -74,4 +74,51 @@ describe('SessionsPage', () => {
 
     expect(screen.getByRole('heading', { name: 'Upload trainings' })).toBeInTheDocument()
   })
+
+  it('deletes the selected sessions after confirmation', async () => {
+    const calls = fakeApi({
+      'GET /api/sessions': () => sessionPage([sessionSummary(), sessionSummary({ id: 's2' }), sessionSummary({ id: 's3' })]),
+      'DELETE /api/sessions/s1': () => new Response(null, { status: 204 }),
+      'DELETE /api/sessions/s3': () => new Response(null, { status: 204 }),
+    })
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
+    renderPage(<SessionsPage />)
+    const boxes = await screen.findAllByRole('checkbox', { name: /^Select session/ })
+
+    await userEvent.click(boxes[0])
+    await userEvent.click(boxes[2])
+    expect(screen.getByRole('region', { name: 'Selection' })).toHaveTextContent('2 selected')
+    await userEvent.click(screen.getByRole('button', { name: 'Delete selected' }))
+    expect(calls.filter((call) => call.method === 'DELETE')).toHaveLength(0)
+    await userEvent.click(screen.getByRole('button', { name: 'Delete selected' }))
+
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === 'DELETE').map((call) => call.path))
+      .toEqual(['/api/sessions/s1', '/api/sessions/s3']))
+    expect(confirm).toHaveBeenLastCalledWith(expect.stringContaining('Delete 2 sessions?'))
+    await vi.waitFor(() => expect(screen.queryByRole('region', { name: 'Selection' })).not.toBeInTheDocument())
+    vi.restoreAllMocks()
+  })
+
+  it('selects every session of the page at once', async () => {
+    fakeApi({ 'GET /api/sessions': () => sessionPage([sessionSummary(), sessionSummary({ id: 's2' })]) })
+    renderPage(<SessionsPage />)
+
+    await userEvent.click(await screen.findByRole('checkbox', { name: 'Select all sessions on this page' }))
+    expect(screen.getByRole('region', { name: 'Selection' })).toHaveTextContent('2 selected')
+    expect(screen.getAllByRole('checkbox', { name: /^Select session/ }).every((box) => (box as HTMLInputElement).checked)).toBe(true)
+  })
+
+  it('says which sessions could not be deleted', async () => {
+    fakeApi({
+      'GET /api/sessions': () => sessionPage([sessionSummary()]),
+      'DELETE /api/sessions/s1': () => new Response(JSON.stringify({ status: 500 }), { status: 500 }),
+    })
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    renderPage(<SessionsPage />)
+
+    await userEvent.click((await screen.findAllByRole('checkbox', { name: /^Select session/ }))[0])
+    await userEvent.click(screen.getByRole('button', { name: 'Delete selected' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('1 of 1 sessions could not be deleted.')
+    vi.restoreAllMocks()
+  })
 })
