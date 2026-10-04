@@ -91,7 +91,8 @@ class GeoTest {
 
         checkAll(Arb.list(offsets, 3..8), offsets, Arb.int(0..7)) { corners, (north, east), shift ->
             val ring = with(Places) { corners.map { (n, e) -> FIELD.offset(n, e) } }
-            if (ring.first() == ring.last()) return@checkAll
+            // A repeated corner is no valid polygon, and a rotation could put it at both ends of the ring.
+            if (ring.toSet().size < ring.size) return@checkAll
             val point = with(Places) { FIELD.offset(north, east) }
             val rotated = ring.drop(shift % ring.size) + ring.take(shift % ring.size)
 
