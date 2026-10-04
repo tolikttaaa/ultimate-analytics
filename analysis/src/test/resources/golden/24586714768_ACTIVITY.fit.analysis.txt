@@ -1,0 +1,23 @@
+analysisVersion: 1
+recordingMode: EVERY_SECOND
+lastT: 6967
+samples: 6964, interpolated: 0
+speed outliers: 0
+gaps: 4 s in 1: [0, 3]
+grid sha256: 5cb371c3b3740a116c8b94be07fdd7c326cd561ba733daad115ab25a8a0b534d
+smoothed speed: max 8.814 m/s
+GPS acceleration: min -2.149, max 1.799 m/s²
+pauses: 62, longest 831 s
+time: elapsed 6967 s, active 1183 s, paused 5780 s, gap 4 s
+moving speed: 3.381 m/s
+samples sha256: 6bd54ee9cc1ab3214b6be6e38ae64bc595d5158fa917db64134c4c4b3d014e68
+efforts: 25, peak speed mean 5.901 max 8.814 m/s, duration mean 6.440 s
+first 3 s: mean speed 3.375 m/s, time to 80 % of peak 2.827 s
+efforts sha256: 95f908dc408ea4843bc02f38799a0b8e6b884becc4ac31a838249f863c4c4858
+distance: 3445.963 m (watch: 4278.370 m), active 2519.100 m
+speed zones (s): STAND 5347, WALK 993, JOG 469, RUN 125, HIGH_SPEED 21, SPRINT 8
+decelerations: 8, fatigue: -4.659 %
+heart rate: avg 141.683, max 178 bpm, zones % [6.003, 27.876, 30.849, 31.093, 3.748]
+session metrics sha256: 8c94e3fb9ce09659140604501c04e30ba070aa3c9c760a688755d3de743dad13
+laps: [0, 612] manual, [612, 2508] manual, [2508, 6967] session_end
+reference position: 34.59064, 32.93808
