@@ -14,6 +14,8 @@ const OUT_DIR = path.resolve(import.meta.dirname, '../../docs/guide')
 const UPLOADED_LATER = '24421586382_ACTIVITY.fit'
 /** Two laps, typed segments: the session the guide walks through. */
 const MAIN_SESSION = '22296100401_ACTIVITY.fit'
+/** A training in the park: the "Park" geozone goes around its start. */
+const PARK_SESSION = '24557963847_ACTIVITY.fit'
 
 type Side = 'left' | 'right' | 'top' | 'bottom'
 
@@ -103,11 +105,12 @@ async function fillStack(request: APIRequestContext) {
   }
 
   const sessions = (await api<{ items: Session[] }>(request, 'get', '/api/sessions?size=50')).items
-  const latest = await api<{ startPosition: { lat: number; lon: number } }>(request, 'get', `/api/sessions/${sessions[0].id}`)
+  const park = sessions.find((session) => session.fileName === PARK_SESSION)!
+  const parkStart = (await api<{ startPosition: { lat: number; lon: number } }>(request, 'get', `/api/sessions/${park.id}`)).startPosition
   await api(request, 'post', '/api/geozones', {
     name: 'Park',
     surface: 'GRASS',
-    shape: { type: 'circle', lat: latest.startPosition.lat, lon: latest.startPosition.lon, radiusM: 150 },
+    shape: { type: 'circle', lat: parkStart.lat, lon: parkStart.lon, radiusM: 150 },
   })
 
   // Warm-up, a drill and a game in most sessions; the main session also gets a cutting drill.
@@ -133,7 +136,8 @@ test('user guide screenshots', async ({ page, request }) => {
 
   // 1. Sessions list.
   await page.goto('/')
-  await expect(page.locator('.sessions-table tbody tr')).toHaveCount(12)
+  const uploaded = readdirSync(GOLDEN_DIR).filter((name) => name.endsWith('.fit')).length - 1
+  await expect(page.locator('.sessions-table tbody tr')).toHaveCount(uploaded)
   await shoot(page, 'sessions', [
     { n: 1, target: page.locator('.app-header nav'), frame: true, side: 'right' },
     { n: 2, target: page.getByRole('button', { name: 'Upload FIT files' }) },
